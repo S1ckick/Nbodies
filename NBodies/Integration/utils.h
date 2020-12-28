@@ -26,7 +26,8 @@ Type Utils<Type>::energy(std::vector< Body <Type>> &bodies){
     }
     Type PE = 0;
     for(int i = 0; i < bodies.size(); i++){
-        for(int j = i + 1; j < bodies.size(); j++){
+        for(int j = 0; j < bodies.size(); j++){
+            if(i == j ) continue;
             vec<Type> dist = bodies[i].r - bodies[j].r;
             PE+=G*bodies[i].m * bodies[j].m / dist.Len();
         }

@@ -2,6 +2,7 @@
 
 #include "Integration/integration.h"
 #include <vector>
+#include "Writer/writer.h"
 using namespace std;
 int main() {
 
@@ -19,18 +20,18 @@ int main() {
 
     Integration<double> integrator;
     Utils<double> util;
-    for(int i = 0; i < 10; i++){
+    vector<double> energy;
+    vector<double> iterations;
 
-        for(int j = 0; j< bodies.size(); j++){
-            cout << j << ") pos: " <<bodies[j].r.X << " " << bodies[j].r.Y << " " << bodies[j].r.Z << endl;
-            cout <<"  vel: "<<bodies[j].v.X << " " << bodies[j].v.Y << " " << bodies[j].v.Z << endl;
-            cout <<"  acc: "<<bodies[j].a.X << " " << bodies[j].a.Y << " " << bodies[j].a.Z << endl;
-            cout << "------------------------------- \n";
-        }
+    for(int i = 0; i < 10000; i++){
         integrator.compute(bodies, 0.001);
-        double energy = util.energy(bodies);
-        printf("Energy: %.18le \n", energy);
+        energy.push_back(util.energy(bodies));
+        printf("Energy: %.18le \n", energy.back());
+        iterations.push_back(i);
     }
+
+    writer<double> w;
+    w.writeRes("../log.txt", iterations, energy);
 
     return 0;
 }

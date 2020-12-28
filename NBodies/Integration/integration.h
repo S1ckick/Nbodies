@@ -24,14 +24,15 @@ void Integration<Type>::compute(std::vector< Body<Type> > &bodies, double m_time
     for(int i = 0; i < bodies.size(); i++){
         Type mass1 = bodies[i].m;
         vec<Type> acceleration{0,0,0};
-        for(int j = i + 1; j < bodies.size(); j++){
+        for(int j = 0; j < bodies.size(); j++){
+            if(i == j) continue;
             Type mass2 = bodies[j].m;
 
             vec<Type> dist = bodies[i].r - bodies[j].r;
 
             Type d = dist.Len();
 
-            Type f = G * (mass1 * mass2) / (d * d * d);
+            Type f = G * (mass2) / (d * d * d);
 
             acceleration+=rk.SolveRungeKutta(bodies[j], bodies[i], f, m_time_step);
 
