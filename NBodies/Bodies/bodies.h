@@ -6,6 +6,7 @@
 #define NBODIES_BODIES_H
 
 #include "../Math/vec.h"
+#define G 6.6743e-11
 
 template <class Type>
 struct Body{

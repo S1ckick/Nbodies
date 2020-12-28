@@ -7,26 +7,29 @@ int main() {
 
     vector< Body<double> > bodies;
 
-    bodies.push_back({{ 0, 0, 0 }, { 0,0,0 }, 2e30});
-    bodies.push_back({{ 0, 5.0e10, 0 }, { 4, 0, 0 }, 3.285e23});
-    bodies.push_back({{ 0, 1.1e11, 0 }, { 35, 0, 0 }, 4.8e24});
-    bodies.push_back({{ 0, 1.5e11, 0 }, { 3,0,0 }, 6e24});
-    bodies.push_back({{ 0, 2.2e11, 0 }, { 2,0,0 }, 2.4e24});
-    bodies.push_back({{ 7.7e11,0,0 }, { 0,13,0 }, 1e28});
-    bodies.push_back({{ 0, 1.4e12, 0 }, { 9,0,0 }, 5.7e26});
-    bodies.push_back({{ 0, 2.8e12, 0 }, { 6, 0, 0 }, 8.7e25});
-    bodies.push_back({{ 0, 4.5e12, 0 }, { 54,0,0 }, 1e26});
-    bodies.push_back({{ 0, 7.3e12, 0 }, { 4,0,0 }, 1.3e22});
+
+    bodies.push_back({{ 0, 1, 0 }, { 35, 0, 0 }, 1, {0,0,3}});
+    bodies.push_back({{ 0, 2, 1 }, { 3,0,0 }, 1, {0,3,1}});
+    bodies.push_back({{ 1, 2, 0 }, { 2,0,0 }, 1, {5,2,4}});
+    bodies.push_back({{ 4,0,0 }, { 0,13,0 }, 1, {3,6,8}});
+    bodies.push_back({{ 0, 2, 0 }, { 9,0,0 }, 1, {1,0,0}});
+    bodies.push_back({{ 0, 8, 2 }, { 6, 0, 0 }, 1, {2,1,1}});
+    bodies.push_back({{ 1, 1, 1 }, { 54,0,0 }, 1, {1,1,1}});
+    bodies.push_back({{ 0, 14, 18 }, { 4,0,0 }, 1, {1,0,1}});
 
     Integration<double> integrator;
+    Utils<double> util;
     for(int i = 0; i < 10; i++){
-        integrator.compute(bodies, 1);
+
         for(int j = 0; j< bodies.size(); j++){
             cout << j << ") pos: " <<bodies[j].r.X << " " << bodies[j].r.Y << " " << bodies[j].r.Z << endl;
             cout <<"  vel: "<<bodies[j].v.X << " " << bodies[j].v.Y << " " << bodies[j].v.Z << endl;
             cout <<"  acc: "<<bodies[j].a.X << " " << bodies[j].a.Y << " " << bodies[j].a.Z << endl;
             cout << "------------------------------- \n";
         }
+        integrator.compute(bodies, 0.001);
+        double energy = util.energy(bodies);
+        printf("Energy: %.18le \n", energy);
     }
 
     return 0;
