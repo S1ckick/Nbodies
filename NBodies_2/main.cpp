@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 
 #include "Nbodies/integration.h"
@@ -25,7 +24,7 @@ int main() {
 
 
     for (int i = 0; i < 10000; i++) {
-        RungeKutta4(b, 0.9);
+        Compute(b, 0.1, RungeKutta4);
 
         if(true) {
             energy.push_back(Energy(b));

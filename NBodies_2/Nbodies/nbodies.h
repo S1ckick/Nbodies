@@ -6,7 +6,6 @@
 #define NBODIES_NBODIES_H
 
 #include "../Utils/vec.h"
-
 const double Gamma = 6.6743e-11;
 
 template <class Type>
@@ -17,31 +16,25 @@ struct Body {
     Body(vec<Type> r1, vec<Type> v1, Type m1, vec<Type> a1 = {Type(0), Type(0), Type(0)})
             : r(r1), v(v1), a(a1), m(m1) {};
 
+    void Update(Type step, vec<Type> da) {
+        a += da;
+        v += a * step;
+        r += v * step;
+    }
 
-    vec<Type> IteractSubtotalForce(const Body<Type> &b2) const{
+    double IteractSubtotalForce(const Body<Type> &b2) const{
         vec<Type> dist = b2.r - r;
         Type len = dist.Len();
-        return dist * (-(Gamma * b2.m * m / (len * len * len)));
+
+        return Gamma * b2.m  / (len * len * len);
     }
 
-    Body& operator=(Body body){
-        m = body.m;
-        r = body.r;
-        v = body.v;
-        a = body.a;
+    // For temporary utility bodies
+    vec<Type> f(vec<Type> da, double step, double scale) {
+        v += da * step * scale;
+        r += v * step * scale;
+        return a * r;
     }
-
-    Body& operator+(Body body){
-        r = body.r;
-        v = body.v;
-    }
-
-    Body& operator*(Type number){
-        r = r * number;
-        v = v * number;
-    }
-
-
 };
 
 #endif //NBODIES_NBODIES_H

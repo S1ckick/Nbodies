@@ -11,7 +11,25 @@
 #include <numeric>
 #include <string>
 
-#include "Nbodies.h"
+#include "nbodies.h"
+
+template <typename Type>
+void Compute(std::vector<Body<Type>> &bodies, Type step,
+             vec<Type> (*Method)(const Body<Type> &, double)) {
+    for (size_t i = 0; i < bodies.size(); i++) {
+        Type mass1 = bodies[i].m;
+        vec<Type> acceleration(Type(0),Type(0),Type(0));
+        for (size_t j = 0; j < bodies.size(); j++) {
+            if (i == j) continue;
+
+            Type mass2 = bodies[j].m, da = bodies[i].IteractSubtotalForce(bodies[j]);
+            vec<Type> dist = bodies[j].r - bodies[i].r;
+            Body<Type> tmp(dist, bodies[i].v, 0, vec<Type>(da));
+            acceleration += Method(tmp, step);
+        }
+        bodies[i].Update(step, acceleration);
+    }
+}
 
 template <typename Type>
 Type Energy(std::vector<Body<Type>> &bodies) {
