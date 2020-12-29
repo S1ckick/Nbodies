@@ -1,37 +1,48 @@
 #include <iostream>
-
-#include "Integration/integration.h"
 #include <vector>
+
+#include "Nbodies/integration.h"
+#include "Integration/methods.h"
 #include "Writer/writer.h"
-using namespace std;
+
 int main() {
 
-    vector< Body<double> > bodies;
+    std::vector<Body<double>> b;
 
 
-    bodies.push_back({{ 0, 1, 0 }, { 35, 0, 0 }, 1, {0,0,3}});
-    bodies.push_back({{ 0, 2, 1 }, { 3,0,0 }, 1, {0,3,1}});
-    bodies.push_back({{ 1, 2, 0 }, { 2,0,0 }, 1, {5,2,4}});
-    bodies.push_back({{ 4,0,0 }, { 0,13,0 }, 1, {3,6,8}});
-    bodies.push_back({{ 0, 2, 0 }, { 9,0,0 }, 1, {1,0,0}});
-    bodies.push_back({{ 0, 8, 2 }, { 6, 0, 0 }, 1, {2,1,1}});
-    bodies.push_back({{ 1, 1, 1 }, { 54,0,0 }, 1, {1,1,1}});
-    bodies.push_back({{ 0, 14, 18 }, { 4,0,0 }, 1, {1,0,1}});
+    b.push_back(Body<double>({0,0,0},{0,0,0},2e30));
+    b.push_back(Body<double>({ 0, 1.4e12, 0 },{ 9000,0,0 },5.7e26));
 
-    Integration<double> integrator;
-    Utils<double> util;
-    vector<double> energy;
-    vector<double> iterations;
+    std::vector<double> energy;
+    std::vector<double> iterations;
+    std::vector<double> x_1;
+    std::vector<double> x_2;
+    std::vector<double> y_1;
+    std::vector<double> y_2;
+    std::vector<double> z_1;
+    std::vector<double> z_2;
 
-    for(int i = 0; i < 10000; i++){
-        integrator.compute(bodies, 0.001);
-        energy.push_back(util.energy(bodies));
-        printf("Energy: %.18le \n", energy.back());
+
+
+    for (int i = 0; i < 10000; i++) {
+        Compute(b, 1.0, RungeKutta4);
+        energy.push_back(Energy(b));
+        printf("Energy: %.64le \n", energy.back());
         iterations.push_back(i);
+
+        x_1.push_back(b[0].r.X);
+        y_1.push_back(b[0].r.Y);
+        z_1.push_back(b[0].r.Z);
+
+        x_2.push_back(b[1].r.X);
+        y_2.push_back(b[1].r.Y);
+        z_2.push_back(b[1].r.Z);
     }
 
     writer<double> w;
     w.writeRes("../log.txt", iterations, energy);
+    w.writeBodies("../bodies.txt", x_1, y_1, z_1, x_2, y_2, z_2);
+
 
     return 0;
 }

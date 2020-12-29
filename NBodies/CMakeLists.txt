@@ -3,4 +3,4 @@ project(NBodies)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(NBodies main.cpp Math/vec.h Integration/integration.h Integration/RungeKutta4.h Bodies/bodies.h Integration/utils.h Writer/writer.h)
+add_executable(NBodies main.cpp Utils/vec.h Integration/methods.h Nbodies/nbodies.h Writer/writer.h Nbodies/integration.h)
