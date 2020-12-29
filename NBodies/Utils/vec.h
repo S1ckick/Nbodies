@@ -12,7 +12,7 @@ class vec {
 public:
     type X, Y, Z;
 
-    vec(){}
+    vec() : X(type(0)), Y(type(0)), Z(type(0)) {}
     vec(type A, type B, type C) : X(A), Y(B), Z(C) {}
 
     explicit vec(type A) : X(A), Y(A), Z(A) {}

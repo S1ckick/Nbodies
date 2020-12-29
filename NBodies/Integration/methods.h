@@ -16,9 +16,9 @@ void copyBodies(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &
 }
 
 template <typename Type>
-void f(std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &fbodies){
+void f(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &fbodies){
     for(int body_1_idx = 0; body_1_idx < bodies.size(); body_1_idx++){
-        vec<Type> total_force{0,0,0};
+        vec<Type> total_force(Type(0),Type(0),Type(0));
         for(int body_2_idx = 0; body_2_idx < bodies.size(); body_2_idx++){
             if(body_1_idx == body_2_idx) continue;
 

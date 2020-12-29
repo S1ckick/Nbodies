@@ -10,8 +10,8 @@ int main() {
     std::vector<Body<double>> b;
 
 
-    b.push_back(Body<double>({0,0,0},{0,0,0},2e30));
-    b.push_back(Body<double>({ 0, 1.5e11, 0 },{ 30000,0,0 },6e24));
+    b.push_back(Body<double>({0,0,0},{0,0,0},2e14));
+    b.push_back(Body<double>({ 0, 1.5e3, 0 },{ 3,0,0 },6));
 
     std::vector<double> energy;
     std::vector<double> iterations;
@@ -24,8 +24,8 @@ int main() {
 
 
 
-    for (int i = 0; i < 10000; i++) {
-        RungeKutta4(b, 0.9);
+    for (int i = 0; i < 100000; i++) {
+        RungeKutta4(b, 0.1);
 
         if(true) {
             energy.push_back(Energy(b));
