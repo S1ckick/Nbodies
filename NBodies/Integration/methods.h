@@ -25,7 +25,7 @@ void f(std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &fbodies){
             total_force += bodies[body_1_idx].IteractSubtotalForce(bodies[body_2_idx]);
         }
         fbodies[body_1_idx].r = bodies[body_1_idx].v;
-        fbodies[body_1_idx].v = total_force / bodies[body_1_idx].m;
+        fbodies[body_1_idx].v = total_force;
     }
 }
 
