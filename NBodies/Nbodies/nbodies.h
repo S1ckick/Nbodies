@@ -21,6 +21,9 @@ struct Body {
     vec<Type> IteractSubtotalForce(const Body<Type> &b2) const{
         vec<Type> dist = r - b2.r;
         Type len = dist.Len();
+        if (len < 1e-8){
+            len = 1e-8;
+        }
         return dist * (-(Gamma * b2.m / (len * len * len)));
     }
 

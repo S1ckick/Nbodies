@@ -7,44 +7,44 @@
 
 int main() {
 
-    std::vector<Body<double>> b;
+    std::vector<Body<double>> bodies;
+
+    //bodies.push_back(Body<double>({0,3e4,0},{0,0,0},2e14));
+    //bodies.push_back(Body<double>({0,3e4 + 1.5e3,0},{3,0,0},6));
+
+    bodies.push_back(Body<double>({0,0,0},{0,0,0},2e14));
+    bodies.push_back(Body<double>({ 0, 1.4e3, 0 },{ 3,0,0 },6));
+    bodies.push_back(Body<double>({ 0, 1.3e3, 0 },{ 3,0,0 },6));
+    bodies.push_back(Body<double>({ 0, 1.5e3, 0 },{ 2,0,sqrt(5) },6));
+    bodies.push_back(Body<double>({ 0, 1.2e3, 0 },{ 0,0,3 },6));
+    bodies.push_back(Body<double>({ 0, 1.5e3, 0 },{ -2,0,sqrt(5) },6));
 
 
-    b.push_back(Body<double>({0,0,0},{0,0,0},2e14));
-    b.push_back(Body<double>({ 0, 1.5e3, 0 },{ 3,0,0 },6));
+    //bodies.push_back(Body<double>({3e3,0,0},{0,0,0},2e14));
+    //bodies.push_back(Body<double>({ 4.5e3, 0, 0 },{ 3,0,0 },6));
 
-    std::vector<double> energy;
-    std::vector<double> iterations;
-    std::vector<double> x_1;
-    std::vector<double> x_2;
-    std::vector<double> y_1;
-    std::vector<double> y_2;
-    std::vector<double> z_1;
-    std::vector<double> z_2;
-
-
+    json data_energy, data_bodies;
 
     for (int i = 0; i < 100000; i++) {
-        RungeKutta4(b, 0.1);
+        RungeKutta4(bodies, 0.1);
 
-        if( i % 1000 == 0) {
-            energy.push_back(Energy(b));
-            iterations.push_back(i);
-            x_1.push_back(b[0].r.X);
-            y_1.push_back(b[0].r.Y);
-            z_1.push_back(b[0].r.Z);
+        if( true ) {
+            for(int j = 0; j < bodies.size(); j++){
+                data_bodies[j]["X"][i] = bodies[j].r.X;
+                data_bodies[j]["Y"][i] = bodies[j].r.Y;
+                data_bodies[j]["Z"][i] = bodies[j].r.Z;
+            }
 
-            x_2.push_back(b[1].r.X);
-            y_2.push_back(b[1].r.Y);
-            z_2.push_back(b[1].r.Z);
+            data_energy["n"].push_back(i);
+            data_energy["energy"].push_back(Energy(bodies));
 
-            printf("Energy: %.64le \n", energy.back());
+            printf("Energy: %.64le \n", (double)data_energy["energy"][i]);
         }
     }
 
     writer<double> w;
-    w.writeRes("../log.txt", iterations, energy);
-    w.writeBodies("../bodies.txt", x_1, y_1, z_1, x_2, y_2, z_2);
+    w.writeRes("../log.json", data_energy);
+    w.writeRes("../bodies.json", data_bodies);
 
 
     return 0;
