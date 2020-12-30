@@ -19,9 +19,9 @@ struct Body {
 
 
     vec<Type> IteractSubtotalForce(const Body<Type> &b2) const{
-        vec<Type> dist = b2.r - r;
+        vec<Type> dist = r - b2.r;
         Type len = dist.Len();
-        return dist * ((Gamma * b2.m / (len * len * len)));
+        return dist * (-(Gamma * b2.m / (len * len * len)));
     }
 
     Body& operator=(Body body){

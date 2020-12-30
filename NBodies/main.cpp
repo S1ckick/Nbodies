@@ -27,7 +27,7 @@ int main() {
     for (int i = 0; i < 100000; i++) {
         RungeKutta4(b, 0.1);
 
-        if(true) {
+        if( i % 1000 == 0) {
             energy.push_back(Energy(b));
             iterations.push_back(i);
             x_1.push_back(b[0].r.X);
