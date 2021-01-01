@@ -5,10 +5,9 @@
 #include "Integration/methods.h"
 #include "Writer/writer.h"
 
-#include <time.h>
+#include <chrono>
 int main() {
-    time_t start, end;
-    time(&start);
+    auto start = std::chrono::high_resolution_clock::now();
 
     std::vector<Body<double>> bodies;
 
@@ -50,8 +49,9 @@ int main() {
             //printf("Energy: %.64le \n", (double)data_energy["energy"][i]);
         }
     }
-    time(&end);
-    printf("time: %.18le \n", end - start);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+    printf("time: %lld microseconds \n", duration.count());
     writer<double> w;
     w.writeRes("../log.json", data_energy);
     w.writeRes("../bodies.json", data_bodies);
