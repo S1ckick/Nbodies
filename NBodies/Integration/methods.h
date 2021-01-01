@@ -7,14 +7,7 @@
 
 #include "../Nbodies/nbodies.h"
 
-template<typename Type>
-void copyBodies(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &newBodies){
-    newBodies.clear();
-    for(int i = 0; i < bodies.size(); i++){
-        newBodies.push_back(bodies[i]);
-    }
-}
-
+//derivative
 template <typename Type>
 void f(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &fbodies){
     for(int body_1_idx = 0; body_1_idx < bodies.size(); body_1_idx++){
@@ -28,32 +21,6 @@ void f(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &fbodies){
         fbodies[body_1_idx].v = total_force;
     }
 }
-
-
-template <typename Type>
-std::vector<Body<Type>> addBodies(const std::vector<Body<Type>> &bodies, const std::vector<Body<Type>> &fbodies){
-    std::vector<Body<Type>> newBodies;
-    copyBodies(bodies, newBodies);
-    for(int i = 0; i < bodies.size(); i++){
-        newBodies[i].r = bodies[i].r + fbodies[i].r;
-        newBodies[i].v = bodies[i].v + fbodies[i].v;
-    }
-    return newBodies;
-}
-
-template <typename Type>
-std::vector<Body<Type>> multBodies(const std::vector<Body<Type>> &bodies, Type number){
-    std::vector<Body<Type>> newBodies;
-    copyBodies(bodies, newBodies);
-
-    for(int i = 0; i < bodies.size(); i++){
-        newBodies[i].r = bodies[i].r * number;
-        newBodies[i].v = bodies[i].v * number;
-    }
-    return newBodies;
-}
-
-
 
 template <typename Type>
 vec<Type> RungeKutta4(std::vector<Body<Type>> &bodies, double h) {

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#include "Nbodies/integration.h"
+#include "Nbodies/summation.h"
 #include "Integration/methods.h"
 #include "Writer/writer.h"
 
@@ -25,6 +25,9 @@ int main() {
 
     json data_energy, data_bodies;
 
+    double init_energy = summation<double, kinetic_energy_proxy<double>>(kinetic_energy_proxy(bodies), bodies.size()) / 2+
+                         summation<double, potential_energy_proxy<double>>(potential_energy_proxy(bodies),bodies.size() * bodies.size()) / 2;
+
     for (int i = 0; i < 100000; i++) {
         RungeKutta4(bodies, 0.1);
 
@@ -36,9 +39,12 @@ int main() {
             }
 
             data_energy["n"].push_back(i);
-            data_energy["energy"].push_back(Energy(bodies));
+            double energy = (summation<double, kinetic_energy_proxy<double>>(kinetic_energy_proxy(bodies), bodies.size()) +
+                            summation<double, potential_energy_proxy<double>>(potential_energy_proxy(bodies),bodies.size() * bodies.size()))/2;
 
-            printf("Energy: %.64le \n", (double)data_energy["energy"][i]);
+            data_energy["energy"].push_back(abs(energy - init_energy)/init_energy);
+
+            //printf("Energy: %.64le \n", (double)data_energy["energy"][i]);
         }
     }
 
