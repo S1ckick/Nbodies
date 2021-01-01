@@ -5,7 +5,10 @@
 #include "Integration/methods.h"
 #include "Writer/writer.h"
 
+#include <time.h>
 int main() {
+    time_t start, end;
+    time(&start);
 
     std::vector<Body<double>> bodies;
 
@@ -47,11 +50,11 @@ int main() {
             //printf("Energy: %.64le \n", (double)data_energy["energy"][i]);
         }
     }
-
+    time(&end);
+    printf("time: %.18le \n", end - start);
     writer<double> w;
     w.writeRes("../log.json", data_energy);
     w.writeRes("../bodies.json", data_bodies);
-
 
     return 0;
 }
