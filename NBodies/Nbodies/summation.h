@@ -22,12 +22,12 @@ Type summation_neumaier(A container, size_t begin, size_t end, Type& correction)
         }
         else {
             c += (item - t) + s;
-            s = t;
         }
+        s = t;
 
     }
     correction = c;
-    return s;
+    return s + correction;
 }
 
 template <typename Type>
@@ -55,7 +55,7 @@ template <typename Type, class A>
 Type summation(const A& container, size_t size){
     Type correction(0);
 
-    return summation_arr(container, 0, size, &correction);
+    return summation_neumaier(container, 0, size, correction);
 }
 
 #endif //NBODIES_SUMMATION_H

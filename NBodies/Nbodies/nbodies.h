@@ -12,10 +12,10 @@ static const double Gamma = 6.6743e-11;
 template <class Type>
 struct Body {
     Type m;
-    vec<Type> r, v, a;
+    vec<Type> r, v;
 
-    Body(vec<Type> r1, vec<Type> v1, Type m1, vec<Type> a1 = {Type(0), Type(0), Type(0)})
-            : r(r1), v(v1), a(a1), m(m1) {};
+    Body(vec<Type> r1, vec<Type> v1, Type m1)
+            : r(r1), v(v1), m(m1) {};
 
 
     vec<Type> IteractSubtotalForce(const Body<Type> &b2) const{
@@ -31,7 +31,6 @@ struct Body {
         m = body.m;
         r = body.r;
         v = body.v;
-        a = body.a;
     }
 
     Body& operator+(Body body){
@@ -67,7 +66,7 @@ std::vector<Body<Type>> addBodies(const std::vector<Body<Type>> &bodies, const s
 }
 
 template <typename Type>
-std::vector<Body<Type>> multBodies(const std::vector<Body<Type>> &bodies, Type number){
+std::vector<Body<Type>> multBodies(const std::vector<Body<Type>> &bodies, double number){
     std::vector<Body<Type>> newBodies;
     copyBodies(bodies, newBodies);
 
