@@ -7,23 +7,8 @@
 
 #include "../Nbodies/nbodies.h"
 
-//derivative
 template <typename Type>
-void f(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &fbodies){
-    for(int body_1_idx = 0; body_1_idx < bodies.size(); body_1_idx++){
-        vec<Type> total_force(Type(0),Type(0),Type(0));
-        for(int body_2_idx = 0; body_2_idx < bodies.size(); body_2_idx++){
-            if(body_1_idx == body_2_idx) continue;
-
-            total_force += bodies[body_1_idx].IteractSubtotalForce(bodies[body_2_idx]);
-        }
-        fbodies[body_1_idx].r = bodies[body_1_idx].v;
-        fbodies[body_1_idx].v = total_force;
-    }
-}
-
-template <typename Type>
-vec<Type> RungeKutta4(std::vector<Body<Type>> &bodies, double h) {
+void RungeKutta4(std::vector<Body<Type>> &bodies, double h) {
 
     std::vector<Body<Type>> k_1;
     copyBodies(bodies, k_1);

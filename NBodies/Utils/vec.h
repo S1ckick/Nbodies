@@ -186,9 +186,11 @@ public:
             return *(&X + I);
         return 0;
     }
-
-
 };
 
+template <class Type>
+Type abs(const vec<Type> &v) {
+  return v.Len2();
+}
 
 #endif //NBODIES_VEC_H

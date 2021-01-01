@@ -20,23 +20,22 @@ Type potential_energy(const std::vector<Body<Type>> &bodies, size_t body1, size_
     if(r2 < 1e-8){
         return Type(0);
     }
-    return - ( Gamma * bodies[body1].m * bodies[body2].m ) / sqrt(r2);
+    return -(Gamma * bodies[body1].m * bodies[body2].m ) / sqrt(r2);
 }
 
 template<typename Type>
 struct potential_energy_proxy{
     const std::vector<Body<Type>> &bodies;
-        explicit potential_energy_proxy(const std::vector<Body<Type>> &bodies) : bodies(bodies) {};
-        Type operator [](size_t n) const{
-            size_t n1 = n / bodies.size();
-            size_t n2 = n % bodies.size();
-            if(n1 == n2){
-                return Type(0);
-            }
-            return potential_energy(bodies, n1, n2);
+    explicit potential_energy_proxy(const std::vector<Body<Type>> &bodies) : bodies(bodies) {};
+    Type operator [](size_t n) const{
+        size_t n1 = n / bodies.size();
+        size_t n2 = n % bodies.size();
+        if (n1 == n2){
+            return Type(0);
         }
-
-    };
+        return potential_energy(bodies, n1, n2);
+    }
+};
 
 template <typename Type>
 struct kinetic_energy_proxy{

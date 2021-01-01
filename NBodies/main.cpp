@@ -31,8 +31,8 @@ int main() {
 
     json data_energy, data_bodies;
 
-    double init_energy = summation<current_type, kinetic_energy_proxy<current_type>>(kinetic_energy_proxy(bodies), bodies.size()) / 2+
-                         summation<current_type, potential_energy_proxy<current_type>>(potential_energy_proxy(bodies),bodies.size() * bodies.size());
+    double init_energy = summation<current_type, kinetic_energy_proxy<current_type>>(kinetic_energy_proxy(bodies), bodies.size()) / 2 +
+                         summation<current_type, potential_energy_proxy<current_type>>(potential_energy_proxy(bodies), bodies.size() * bodies.size());
 
     for (int i = 0; i < 100000; i++) {
         RungeKutta4(bodies, 0.1);
