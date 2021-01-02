@@ -10,10 +10,8 @@
 //not working properly
 //should be used instead of summation_arr
 template<typename Type, class A>
-Type summation_neumaier(A container, size_t begin, size_t end, Type& correction){
-    Type s = Type(0);
-    Type c = Type(0);
-    Type t = Type(0);
+Type summation_neumaier(const A &container, size_t begin, size_t end, Type& correction){
+    Type s = Type(0), c = Type(0), t = Type(0);
     for(size_t i = begin; i < end; ++i){
         Type item = container[i];
         t = s + item;
@@ -24,7 +22,6 @@ Type summation_neumaier(A container, size_t begin, size_t end, Type& correction)
             c += (item - t) + s;
         }
         s = t;
-
     }
     correction = c;
     return s + correction;
