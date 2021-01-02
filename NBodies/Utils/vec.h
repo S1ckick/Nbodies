@@ -14,7 +14,7 @@ public:
 
     vec() : X(type(0)), Y(type(0)), Z(type(0)) {}
     vec(type A, type B, type C) : X(A), Y(B), Z(C) {}
-
+    vec(const vec& v) : X(v.X), Y(v.Y), Z(v.Z) {}
     explicit vec(type A) : X(A), Y(A), Z(A) {}
 
     operator type *(void) { return &X; }

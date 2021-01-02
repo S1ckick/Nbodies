@@ -7,6 +7,7 @@
 
 #include "../Utils/vec.h"
 #include "summation.h"
+#include <random>
 
 static const double Gamma = 6.6743e-11;
 
@@ -45,6 +46,17 @@ struct Body {
 
 
 };
+
+template<typename Type>
+vec<Type> force(const vec<Type>& v1, const vec<Type>& v2, Type m1, Type m2){
+    vec<Type> dist = v1 - v2;
+    Type len = dist.Len();
+    if (len < 1e-8){
+        len = 1e-8;
+    }
+    return dist * (-(Gamma * m1 * m2 / (len * len * len)));
+}
+
 
 template<typename Type>
 void copyBodies(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &newBodies){
@@ -108,6 +120,61 @@ void f(const std::vector<Body<Type>> &bodies,
     fbodies[body_1_idx].r = bodies[body_1_idx].v;
     fbodies[body_1_idx].v = total_force;
   }
+}
+
+template <typename Type>
+void add_galaxy(std::vector<Body<Type>> &bodies,const vec<Type>&center, const vec<Type>& velocity,
+                Type radius, Type total_mass, size_t count){
+    vec<Type> up{Type(0),Type(0),Type(1)};
+    vec<Type> right{Type(1),Type(0),Type(0)};
+
+    Type black_hole_mass_ratio = Type(0.999);
+    Type black_hole_mass = total_mass * black_hole_mass_ratio;
+    Type star_mass = (total_mass - black_hole_mass) / count;
+    Type all_stars_mass = count * star_mass;
+
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_real_distribution<Type> dist(-radius, radius);
+
+    bodies.push_back({center, velocity, black_hole_mass});
+    for(size_t n = 0; n < count; ++n){
+        vec<Type> r{dist(mt), dist(mt), dist(mt)};
+        Type rlen = r.Len();
+
+        if(rlen > radius){
+            --n;
+            continue;
+        }
+
+        r.Z *=Type(0.3);
+
+        r+=center;
+
+        vec<Type> v((r-center) % up);
+        if(v.Len() < Type(1e-7)){
+            v = (r - center) % right;
+        }
+
+        v.Normalize();
+        Type temp = rlen / radius;
+        Type effective_mass =temp * temp * temp * all_stars_mass + black_hole_mass;
+        v*= sqrt(force(r, center, star_mass, effective_mass).Len() * (r - center).Len() / star_mass);
+        bodies.push_back({r, v + velocity, star_mass});
+    }
+}
+
+template <typename Type>
+void make_universe(std::vector<Body<Type>> &bodies, size_t star_count, Type sx, Type sy, Type sz) {
+    Type radius = sx * Type(0.5);
+    Type galaxy_mass = Type(1e8);
+    vec<Type> center{sx * Type(0.5), sy * Type(0.5), sz * Type(0.5)};
+    vec<Type> base{radius, Type(0), Type(0)};
+    vec<Type> velosity{Type(0), sqrt(force(vec<Type>(), base, galaxy_mass, galaxy_mass).Len() * (base).Len() /
+                                     (Type(2) * galaxy_mass)), Type(0)};
+
+    add_galaxy(bodies, center - base, velosity / Type(3), radius, galaxy_mass, star_count);
+    add_galaxy(bodies, center + base, -velosity / Type(3), radius, galaxy_mass, star_count);
 }
 
 #endif //NBODIES_NBODIES_H
