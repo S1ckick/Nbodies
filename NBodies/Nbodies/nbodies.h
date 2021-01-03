@@ -22,28 +22,28 @@ struct Body {
     vec<Type> IteractSubtotalForce(const Body<Type> &b2) const{
         vec<Type> dist = r - b2.r;
         Type len = dist.Len();
-        if (len < 1e-8){
-            len = 1e-8;
-        }
         return dist * (-(Gamma * b2.m / (len * len * len)));
     }
 
-    Body& operator=(Body body){
+    Body& operator=(const Body& body){
+        r = body.r;
+        v = body.v;
         m = body.m;
-        r = body.r;
-        v = body.v;
+        return *this;
     }
 
-    Body& operator+(Body body){
-        r = body.r;
-        v = body.v;
+
+    friend Body& operator+(Body body1, const Body& body2){
+        body1.r = body1.r + body2.r;
+        body1.v = body1.v + body2.v;
+        return body1;
     }
 
-    Body& operator*(Type number){
-        r = r * number;
-        v = v * number;
+    friend Body& operator*(Body body1, Type number){
+        body1.r = body1.r * number;
+        body1.v = body1.v * number;
+        return body1;
     }
-
 
 };
 
@@ -51,9 +51,6 @@ template<typename Type>
 vec<Type> force(const vec<Type>& v1, const vec<Type>& v2, Type m1, Type m2){
     vec<Type> dist = v1 - v2;
     Type len = dist.Len();
-    if (len < 1e-8){
-        len = 1e-8;
-    }
     return dist * (-(Gamma * m1 * m2 / (len * len * len)));
 }
 
@@ -67,8 +64,27 @@ void copyBodies(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &
 }
 
 template <typename Type>
+std::vector<Body<Type>> operator+(const std::vector<Body<Type>>& bodies_1,const std::vector<Body<Type>>& bodies_2){
+    std::vector<Body<Type>> res;
+    for(int i = 0; i < bodies_1.size(); i++){
+        res.push_back(bodies_1[i] + bodies_2[i]);
+    }
+    return res;
+}
+
+template <typename Type>
+std::vector<Body<Type>> operator*(const std::vector<Body<Type>>& bodies_1, Type number){
+    std::vector<Body<Type>> res;
+    for(int i = 0; i < bodies_1.size(); i++){
+        res.push_back(bodies_1[i] * number);
+    }
+    return res;
+}
+
+template <typename Type>
 std::vector<Body<Type>> addBodies(const std::vector<Body<Type>> &bodies, const std::vector<Body<Type>> &fbodies){
     std::vector<Body<Type>> newBodies;
+    newBodies = bodies + bodies;
     copyBodies(bodies, newBodies);
     for(int i = 0; i < bodies.size(); i++){
         newBodies[i].r = bodies[i].r + fbodies[i].r;
@@ -78,7 +94,7 @@ std::vector<Body<Type>> addBodies(const std::vector<Body<Type>> &bodies, const s
 }
 
 template <typename Type>
-std::vector<Body<Type>> multBodies(const std::vector<Body<Type>> &bodies, double number){
+std::vector<Body<Type>> multBodies(const std::vector<Body<Type>> &bodies, Type number){
     std::vector<Body<Type>> newBodies;
     copyBodies(bodies, newBodies);
 

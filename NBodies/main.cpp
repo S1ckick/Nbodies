@@ -18,16 +18,13 @@ int main() {
     //bodies.push_back(Body<double>({0,3e4,0},{0,0,0},2e14));
     //bodies.push_back(Body<double>({0,3e4 + 1.5e3,0},{3,0,0},6));
 
-    make_universe(bodies,20,current_type(100),current_type(100),current_type(100));
+   //make_universe(bodies,20,current_type(100),current_type(100),current_type(100));
 
-    /*
+
     bodies.push_back(Body<current_type>({0,0,0},{0,0,0},2e14));
     bodies.push_back(Body<current_type>({ 0, 1.4e3, 0 },{ 3,0,0 },6));
     bodies.push_back(Body<current_type>({ 0, 1.3e3, 0 },{ 3,0,0 },6));
-    bodies.push_back(Body<current_type>({ 0, 1.5e3, 0 },{ 2,0,sqrt(5) },6));
-    bodies.push_back(Body<current_type>({ 0, 1.2e3, 0 },{ 0,0,3 },6));
-    bodies.push_back(Body<current_type>({ 0, 1.5e3, 0 },{ -2,0,sqrt(5) },6));
-    */
+
 
     //bodies.push_back(Body<double>({3e3,0,0},{0,0,0},2e14));
     //bodies.push_back(Body<double>({ 4.5e3, 0, 0 },{ 3,0,0 },6));
@@ -38,7 +35,7 @@ int main() {
                          summation<current_type, potential_energy_proxy<current_type>>(potential_energy_proxy(bodies), bodies.size() * bodies.size());
 
     for (int i = 0; i < 100000; i++) {
-        RungeKutta4(bodies, 0.1);
+         RungeKutta4(bodies, 0.0001);
 
         if( true ) {
             for(int j = 0; j < bodies.size(); j++){
