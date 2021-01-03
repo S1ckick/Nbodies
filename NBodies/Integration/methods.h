@@ -7,6 +7,22 @@
 
 #include "../Nbodies/nbodies.h"
 
+
+template <typename Type>
+void Euler(std::vector<Body<Type>> &bodies, double h) {
+
+    std::vector<Body<Type>> k_1;
+    copyBodies(bodies, k_1);
+
+    std::vector<Body<Type>> temp;
+    copyBodies(bodies, temp);
+
+    f(temp,k_1);
+
+    copyBodies( bodies + k_1*h ,bodies);
+}
+
+
 template <typename Type>
 void RungeKutta4(std::vector<Body<Type>> &bodies, double h) {
 

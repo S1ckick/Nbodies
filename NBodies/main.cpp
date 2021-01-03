@@ -18,12 +18,17 @@ int main() {
     //bodies.push_back(Body<double>({0,3e4,0},{0,0,0},2e14));
     //bodies.push_back(Body<double>({0,3e4 + 1.5e3,0},{3,0,0},6));
 
-   //make_universe(bodies,20,current_type(100),current_type(100),current_type(100));
+   //make_universe(bodies,5,current_type(100),current_type(100),current_type(100));
 
 
     bodies.push_back(Body<current_type>({0,0,0},{0,0,0},2e14));
     bodies.push_back(Body<current_type>({ 0, 1.4e3, 0 },{ 3,0,0 },6));
     bodies.push_back(Body<current_type>({ 0, 1.3e3, 0 },{ 3,0,0 },6));
+    bodies.push_back(Body<current_type>({ 0, 1.2e3, 0 },{ 3,0,0 },6));
+    bodies.push_back(Body<current_type>({ 0, 1.1e3, 0 },{ 3,0,0 },6));
+    bodies.push_back(Body<current_type>({ 0, 1.56e3, 0 },{ 3,0,0 },6));
+    bodies.push_back(Body<current_type>({ 0, 1.5e3, 0 },{ 3,0,0 },6));
+
 
 
     //bodies.push_back(Body<double>({3e3,0,0},{0,0,0},2e14));
@@ -31,11 +36,11 @@ int main() {
 
     json data_energy, data_bodies;
 
-    double init_energy = summation<current_type, kinetic_energy_proxy<current_type>>(kinetic_energy_proxy(bodies), bodies.size()) / 2 +
-                         summation<current_type, potential_energy_proxy<current_type>>(potential_energy_proxy(bodies), bodies.size() * bodies.size());
+    double init_energy = summation<current_type, kinetic_energy_proxy<current_type>>(kinetic_energy_proxy(bodies), bodies.size()) / 2+
+                         summation<current_type, potential_energy_proxy<current_type>>(potential_energy_proxy(bodies), bodies.size() * bodies.size()) / 2;
 
     for (int i = 0; i < 100000; i++) {
-         RungeKutta4(bodies, 0.0001);
+         dormanPrince8(bodies, 0.1);
 
         if( true ) {
             for(int j = 0; j < bodies.size(); j++){
@@ -45,8 +50,8 @@ int main() {
             }
 
             data_energy["n"].push_back(i);
-            double energy = (summation<current_type, kinetic_energy_proxy<current_type>>(kinetic_energy_proxy(bodies), bodies.size())/2 +
-                            summation<current_type, potential_energy_proxy<current_type>>(potential_energy_proxy(bodies),bodies.size() * bodies.size()));
+            double energy = summation<current_type, kinetic_energy_proxy<current_type>>(kinetic_energy_proxy(bodies), bodies.size()) / 2 +
+                            summation<current_type, potential_energy_proxy<current_type>>(potential_energy_proxy(bodies),bodies.size() * bodies.size()) / 2;
 
             data_energy["energy"].push_back(abs((energy - init_energy)/init_energy));
 

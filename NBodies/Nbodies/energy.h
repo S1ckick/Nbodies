@@ -17,9 +17,6 @@ template<typename Type>
 Type potential_energy(const std::vector<Body<Type>> &bodies, size_t body1, size_t body2){
     vec<Type> dr = bodies[body1].r - bodies[body2].r;
     Type r2 = dr.Len2();
-    if(r2 < 1e-8){
-        return Type(0);
-    }
     return -(Gamma * bodies[body1].m * bodies[body2].m ) / sqrt(r2);
 }
 

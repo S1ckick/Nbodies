@@ -82,30 +82,6 @@ std::vector<Body<Type>> operator*(const std::vector<Body<Type>>& bodies_1, Type 
 }
 
 template <typename Type>
-std::vector<Body<Type>> addBodies(const std::vector<Body<Type>> &bodies, const std::vector<Body<Type>> &fbodies){
-    std::vector<Body<Type>> newBodies;
-    newBodies = bodies + bodies;
-    copyBodies(bodies, newBodies);
-    for(int i = 0; i < bodies.size(); i++){
-        newBodies[i].r = bodies[i].r + fbodies[i].r;
-        newBodies[i].v = bodies[i].v + fbodies[i].v;
-    }
-    return newBodies;
-}
-
-template <typename Type>
-std::vector<Body<Type>> multBodies(const std::vector<Body<Type>> &bodies, Type number){
-    std::vector<Body<Type>> newBodies;
-    copyBodies(bodies, newBodies);
-
-    for(int i = 0; i < bodies.size(); i++){
-        newBodies[i].r = bodies[i].r * number;
-        newBodies[i].v = bodies[i].v * number;
-    }
-    return newBodies;
-}
-
-template <typename Type>
 struct acceleration_proxy {
   const std::vector<Body<Type>> &bodies;
   const size_t bodyind;
