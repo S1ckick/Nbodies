@@ -8,8 +8,10 @@
 #include "../Utils/vec.h"
 #include "summation.h"
 #include <random>
+#include <qd/dd_real.h>
 
-static const double Gamma = 6.6743e-11;
+template <typename Type>
+static const Type Gamma = 6.6743e-11;
 
 template <class Type>
 struct Body {
@@ -22,7 +24,7 @@ struct Body {
     vec<Type> IteractSubtotalForce(const Body<Type> &b2) const{
         vec<Type> dist = r - b2.r;
         Type len = dist.Len();
-        return dist * (-(Gamma * b2.m / (len * len * len)));
+        return dist * (-(Gamma<Type> * b2.m / (len * len * len)));
     }
 
     Body& operator=(const Body& body){
@@ -51,7 +53,7 @@ template<typename Type>
 vec<Type> force(const vec<Type>& v1, const vec<Type>& v2, Type m1, Type m2){
     vec<Type> dist = v1 - v2;
     Type len = dist.Len();
-    return dist * (-(Gamma * m1 * m2 / (len * len * len)));
+    return dist * (-(Gamma<Type> * m1 * m2 / (len * len * len)));
 }
 
 

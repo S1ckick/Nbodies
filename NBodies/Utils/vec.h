@@ -7,6 +7,8 @@
 
 #include <cmath>
 
+#include <qd/dd_real.h>
+
 template <class type>
 class vec {
 public:
@@ -174,11 +176,11 @@ public:
     }
 
     inline type Len() const {
-        return sqrt(X * X + Y * Y + Z * Z);
+        return sqrt(X*X + Y*Y + Z*Z);
     }
 
     inline type Len2() const {
-        return X * X + Y * Y + Z * Z;
+        return type(X * X + Y * Y + Z * Z);
     }
 
     inline type &operator[](int I) {

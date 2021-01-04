@@ -6,9 +6,10 @@
 #define NBODIES_SUMMATION_H
 
 #include "energy.h"
+#include <qd/dd_real.h>
 
-//not working properly
-//should be used instead of summation_arr
+
+
 template<typename Type, class A>
 Type summation_neumaier(const A &container, size_t begin, size_t end, Type& correction){
     Type s = Type(0), c = Type(0), t = Type(0);
