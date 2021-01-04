@@ -8,7 +8,7 @@
 #include "../Utils/vec.h"
 #include "summation.h"
 #include <random>
-#include <qd/dd_real.h>
+//#include <qd/dd_real.h>
 
 template <typename Type>
 static const Type Gamma = 6.6743e-11;
@@ -95,6 +95,16 @@ struct acceleration_proxy {
     return bodies[bodyind].IteractSubtotalForce(bodies[n]); 
   }
 };
+
+template <typename Type>
+struct total_mass_proxy {
+    const std::vector<Body<Type>> &bodies;
+    explicit total_mass_proxy(const std::vector<Body<Type>> &bodies) : bodies(bodies) {}
+    Type operator[](size_t n) const {
+        return bodies[n].m;
+    }
+};
+
 
 // derivative
 template <typename Type>

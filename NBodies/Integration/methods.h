@@ -4,7 +4,7 @@
 
 #ifndef NBODIES_METHODS_H
 #define NBODIES_METHODS_H
-#include <qd/dd_real.h>
+//#include <qd/dd_real.h>
 #include "../Nbodies/nbodies.h"
 
 

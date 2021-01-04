@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <string>
-#include <qd/dd_real.h>
+//#include <qd/dd_real.h>
 #include "nbodies.h"
 
 template<typename Type>
@@ -37,6 +37,25 @@ struct kinetic_energy_proxy{
     explicit kinetic_energy_proxy(const std::vector<Body<Type>> &bodies) : bodies(bodies) {};
     Type operator[](size_t n) const{
         return bodies[n].v.Len2() * bodies[n].m;
+    }
+};
+
+
+template <class Type, typename BodyType>
+struct impulse_moment_proxy{
+    const std::vector<Body<BodyType>> &bodies;
+    explicit impulse_moment_proxy(const std::vector<Body<BodyType>> &bodies) : bodies(bodies) {};
+    Type operator[](size_t n) const {
+        return bodies[n].r % (bodies[n].v * bodies[n].m);
+    }
+};
+
+template <class Type, typename BodyType>
+struct mass_center_proxy {
+    const std::vector<Body<BodyType>> &bodies;
+    explicit mass_center_proxy(const std::vector<Body<BodyType>> &bodies) : bodies(bodies) {};
+    Type operator[](size_t n) const {
+        return bodies[n].r * bodies[n].m;
     }
 };
 

@@ -7,7 +7,7 @@
 
 #include <cmath>
 
-#include <qd/dd_real.h>
+//#include <qd/dd_real.h>
 
 template <class type>
 class vec {

@@ -6,11 +6,11 @@
 #define NBODIES_SUMMATION_H
 
 #include "energy.h"
-#include <qd/dd_real.h>
+//#include <qd/dd_real.h>
 
 
 
-template<typename Type, class A>
+template<class Type, class A>
 Type summation_neumaier(const A &container, size_t begin, size_t end, Type& correction){
     Type s = Type(0), c = Type(0), t = Type(0);
     for(size_t i = begin; i < end; ++i){
@@ -28,7 +28,7 @@ Type summation_neumaier(const A &container, size_t begin, size_t end, Type& corr
     return s + correction;
 }
 
-template <typename Type>
+template <class Type>
 Type summation_kahan(const Type &a, const Type &b, Type &correction){
     Type corrected = b - correction;
     Type new_sum = a + corrected;
@@ -36,7 +36,7 @@ Type summation_kahan(const Type &a, const Type &b, Type &correction){
     return new_sum;
 }
 
-template <typename Type, class A>
+template <class Type, class A>
 Type summation_arr(A container, size_t begin, size_t end, Type* correction){
     if(begin == end){
         return Type(0);
@@ -49,7 +49,7 @@ Type summation_arr(A container, size_t begin, size_t end, Type* correction){
     return sum;
 }
 
-template <typename Type, class A>
+template <class Type, class A>
 Type summation(const A& container, size_t size){
     Type correction(0);
 
