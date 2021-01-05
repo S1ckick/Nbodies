@@ -8,7 +8,7 @@
 #include "../Utils/vec.h"
 #include "summation.h"
 #include <random>
-//#include <qd/dd_real.h>
+#include <qd/dd_real.h>
 
 template <typename Type>
 static const Type Gamma = 6.6743e-11;
@@ -60,6 +60,7 @@ vec<Type> force(const vec<Type>& v1, const vec<Type>& v2, Type m1, Type m2){
 template<typename Type>
 void copyBodies(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &newBodies){
     newBodies.clear();
+    newBodies.reserve(bodies.size());
     for(int i = 0; i < bodies.size(); i++){
         newBodies.push_back(bodies[i]);
     }
@@ -68,6 +69,7 @@ void copyBodies(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &
 template <typename Type>
 std::vector<Body<Type>> operator+(const std::vector<Body<Type>>& bodies_1,const std::vector<Body<Type>>& bodies_2){
     std::vector<Body<Type>> res;
+    res.reserve(bodies_1.size());
     for(int i = 0; i < bodies_1.size(); i++){
         res.push_back(bodies_1[i] + bodies_2[i]);
     }
@@ -77,6 +79,7 @@ std::vector<Body<Type>> operator+(const std::vector<Body<Type>>& bodies_1,const 
 template <typename Type>
 std::vector<Body<Type>> operator*(const std::vector<Body<Type>>& bodies_1, Type number){
     std::vector<Body<Type>> res;
+    res.reserve(bodies_1.size());
     for(int i = 0; i < bodies_1.size(); i++){
         res.push_back(bodies_1[i] * number);
     }

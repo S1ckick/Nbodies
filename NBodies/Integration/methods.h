@@ -4,9 +4,8 @@
 
 #ifndef NBODIES_METHODS_H
 #define NBODIES_METHODS_H
-//#include <qd/dd_real.h>
+#include <qd/dd_real.h>
 #include "../Nbodies/nbodies.h"
-
 
 
 template <typename Type>
@@ -219,8 +218,8 @@ void dormanPrince8(std::vector<Body<Type>> &bodies, Type h) {
     copyBodies(bodies, k_3);
     f(temp, k_3);
 
-    copyBodies(k_1*b1 + k_6*b6 + k_7*b7 + k_8*b8 + k_9*b9 + k_10*b10 + k_2*b11 + k_3*b12,k_4);
-    copyBodies(bodies + k_4*h,bodies);
+    copyBodies(k_1*b1 + k_6*b6 + k_7*b7 + k_8*b8 + k_9*b9 + k_10*b10 + k_2*b11 + k_3*b12, k_4);
+    copyBodies(bodies + k_4*h, bodies);
 
 }
 

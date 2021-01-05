@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <string>
-//#include <qd/dd_real.h>
+#include <qd/dd_real.h>
 #include "nbodies.h"
 
 template<typename Type>

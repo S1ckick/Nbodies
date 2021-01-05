@@ -6,7 +6,7 @@
 #define NBODIES_SUMMATION_H
 
 #include "energy.h"
-//#include <qd/dd_real.h>
+#include <qd/dd_real.h>
 
 
 
