@@ -19,7 +19,7 @@ int main() {
     unsigned int oldcw;
     //fpu_fix_start(&oldcw);
 
-    using current_type = double;
+    using current_type = long double;
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -54,17 +54,20 @@ int main() {
     current_type total_mass = summation<current_type, total_mass_proxy<current_type>>(total_mass_proxy<current_type>(bodies), bodies.size());
     vec<current_type> init_center_mass = summation<vec<current_type>, mass_center_proxy<vec<current_type>, current_type>>(mass_center_proxy<vec<current_type>, current_type>(bodies), bodies.size());
     init_center_mass = init_center_mass / total_mass;
+    vec<current_type> init_vel_mass = summation<vec<current_type>, mass_vel_proxy<vec<current_type>, current_type>>(mass_vel_proxy<vec<current_type>, current_type>(bodies), bodies.size());
+    init_vel_mass = init_vel_mass / total_mass;
 
-    /*
     for( int i = 0; i < bodies.size(); i++){
-        bodies[i].v -= init_center_mass;
+        //bodies[i].r -= init_center_mass;
+        bodies[i].v -= init_vel_mass;
     }
-    */
+
+
 
 
     current_type h(0.1);
     for (int i = 0; i < 100000; i++) {
-         RungeKutta4(bodies, h);
+         dormanPrince8(bodies, h);
 
         if( true ) {
             for(int j = 0; j < bodies.size(); j++){
@@ -100,8 +103,8 @@ int main() {
 
             if(i > 1){
                 data_center["n"].push_back(i);
-                data_center["center"].push_back(((center_mass - init_center_mass)/(current_type(h*i))).Len());
-                //data_center["center"].push_back(((center_mass - init_center_mass)/(current_type(h*i))).Len().to_string(32, 0, 0, false, false));
+                data_center["center"].push_back(center_mass.Len());
+                //data_center["center"].push_back((center_mass - init_center_mass).Len().to_string(32, 0, 0, false, false)));
 
             }
 

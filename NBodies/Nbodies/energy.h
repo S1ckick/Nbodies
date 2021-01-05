@@ -59,4 +59,13 @@ struct mass_center_proxy {
     }
 };
 
+template <class Type, typename BodyType>
+struct mass_vel_proxy {
+    const std::vector<Body<BodyType>> &bodies;
+    explicit mass_vel_proxy(const std::vector<Body<BodyType>> &bodies) : bodies(bodies) {};
+    Type operator[](size_t n) const {
+        return bodies[n].v * bodies[n].m;
+    }
+};
+
 #endif //NBODIES_ENERGY_H
