@@ -38,13 +38,13 @@ struct Body{
     }
 
 
-    friend Body& operator+(Body body1, const Body& body2){
+    friend Body operator+(Body body1, const Body& body2){
         body1.r = body1.r + body2.r;
         body1.v = body1.v + body2.v;
         return body1;
     }
 
-    friend Body& operator*(Body body1, Type number){
+    friend Body operator*(Body body1, Type number){
         body1.r = body1.r * number;
         body1.v = body1.v * number;
         return body1;
@@ -73,7 +73,8 @@ std::vector<Body<Type>> operator+(const std::vector<Body<Type>>& bodies_1,const 
     std::vector<Body<Type>> res;
     res.reserve(bodies_1.size());
     for(int i = 0; i < bodies_1.size(); i++){
-        res.push_back(bodies_1[i] + bodies_2[i]);
+        Body<Type> item = bodies_1[i] + bodies_2[i];
+        res.push_back(item);
     }
     return res;
 }
@@ -83,7 +84,8 @@ std::vector<Body<Type>> operator*(const std::vector<Body<Type>>& bodies_1, Type 
     std::vector<Body<Type>> res;
     res.reserve(bodies_1.size());
     for(int i = 0; i < bodies_1.size(); i++){
-        res.push_back(bodies_1[i] * number);
+        Body<Type> item = bodies_1[i] * number;
+        res.push_back(item);
     }
     return res;
 }

@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
 
-//#define NUMBER_DOUBLE long double
-#define NUMBER_DOUBLE_DOUBLE dd_real
+//#define NUMBER_DOUBLE 1
+#define NUMBER_DOUBLE_DOUBLE 1
 
 #include "Nbodies/summation.h"
 #include "Integration/methods.h"
@@ -10,12 +10,12 @@
 #include "Nbodies/energy.h"
 
 #ifdef NUMBER_DOUBLE_DOUBLE
-#include <qd/qd_config.h>
 #include <qd/dd_real.h>
 #include <qd/fpu.h>
 #endif
 
 #include <string>
+#include "Utils/helper.h"
 
 using namespace std;
 
@@ -29,10 +29,9 @@ int main() {
     fpu_fix_start(&oldcw);
 #endif
 
-    using current_type = NUMBER_DOUBLE_DOUBLE;
+    using current_type = dd_real;
 
 
-    auto start = std::chrono::high_resolution_clock::now();
 
     std::vector<Body<current_type>> bodies;
 
@@ -65,22 +64,23 @@ int main() {
     }
 
 
-
     json data_energy, data_impulse_moment, data_center, data_bodies;
     current_type h(0.1);
     int iterations = 100000;
 
+    std::vector<current_type> coefs = initDDCoef<current_type>();
+    auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < iterations; i++) {
-         RungeKutta4(bodies, h);
+         dormanPrince8(bodies, h, coefs);
 
         if( true ) {
             for(int j = 0; j < bodies.size(); j++){
 
 
 #ifdef NUMBER_DOUBLE_DOUBLE
-                    data_bodies[j]["X"][i] = bodies[j].r.X.to_string(32, 0, ios_base::scientific, false, false);
-                    data_bodies[j]["Y"][i] = bodies[j].r.Y.to_string(32, 0, ios_base::scientific, false, false);
-                    data_bodies[j]["Z"][i] = bodies[j].r.Z.to_string(32, 0, ios_base::scientific, false, false);
+                    data_bodies[j]["X"][i] = bodies[j].r.X._hi();
+                    data_bodies[j]["Y"][i] = bodies[j].r.Y._hi();
+                    data_bodies[j]["Z"][i] = bodies[j].r.Z._hi();
 #endif
 #ifdef NUMBER_DOUBLE
 
@@ -100,7 +100,7 @@ int main() {
 
             data_energy["n"].push_back(i);
 #ifdef NUMBER_DOUBLE_DOUBLE
-            data_energy["energy"].push_back(abs((energy - init_energy)/init_energy).to_string(32, 0, ios_base::scientific, false, false));
+            data_energy["energy"].push_back((abs((energy - init_energy)/init_energy)).to_string());
 #endif
 #ifdef NUMBER_DOUBLE
             data_energy["energy"].push_back(abs((energy - init_energy)/init_energy));
@@ -108,7 +108,7 @@ int main() {
 
             data_impulse_moment["n"].push_back(i);
 #ifdef NUMBER_DOUBLE_DOUBLE
-            data_impulse_moment["moment"].push_back(abs((impulse_moment - init_impulse_moment).Len() / init_impulse_moment.Len()).to_string(32, 0, ios_base::scientific, false, false));
+            data_impulse_moment["moment"].push_back(abs((impulse_moment - init_impulse_moment).Len() / init_impulse_moment.Len()).to_string());
 #endif
 #ifdef NUMBER_DOUBLE
             data_impulse_moment["moment"].push_back(abs((impulse_moment - init_impulse_moment).Len() / init_impulse_moment.Len()));
@@ -117,7 +117,7 @@ int main() {
             if(i > 1){
                 data_center["n"].push_back(i);
 #ifdef NUMBER_DOUBLE_DOUBLE
-                data_center["center"].push_back(center_mass.Len().to_string(32, 0, ios_base::scientific, false, false));
+                data_center["center"].push_back(center_mass.Len().to_string());
 #endif
 #ifdef NUMBER_DOUBLE
                 data_center["center"].push_back(center_mass.Len());
