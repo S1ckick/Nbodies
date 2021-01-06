@@ -5,9 +5,14 @@
 #ifndef NBODIES_VEC_H
 #define NBODIES_VEC_H
 
-#include <cmath>
-
+#ifdef NUMBER_DOUBLE_DOUBLE
 #include <qd/dd_real.h>
+#endif
+
+#ifdef NUMBER_DOUBLE
+#include <cmath>
+#endif
+
 
 template <class type>
 class vec {
@@ -20,14 +25,6 @@ public:
     explicit vec(type A) : X(A), Y(A), Z(A) {}
 
     operator type *(void) { return &X; }
-
-    inline vec Min(const vec &V) const {
-        return vec(std::fmin(X, V.X), std::fmin(Y, V.Y), std::fmin(Z, V.Z));
-    }
-
-    inline vec Max(const vec &V) const {
-        return vec(std::fmax(X, V.X), std::fmax(Y, V.Y), std::fmax(Z, V.Z));
-    }
 
     inline bool operator==(const vec &V) const {
         return (X == V.X && Y == V.Y && Z == V.Z);

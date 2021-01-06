@@ -5,9 +5,13 @@
 #ifndef NBODIES_ENERGY_H
 #define NBODIES_ENERGY_H
 
+#ifdef NUMBER_DOUBLE_DOUBLE
+#include <qd/dd_real.h>
+#endif
+
 #include <vector>
 #include <string>
-#include <qd/dd_real.h>
+
 #include "nbodies.h"
 
 template<typename Type>

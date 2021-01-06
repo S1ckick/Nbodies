@@ -5,16 +5,19 @@
 #ifndef NBODIES_NBODIES_H
 #define NBODIES_NBODIES_H
 
+#ifdef NUMBER_DOUBLE_DOUBLE
+#include <qd/dd_real.h>
+#endif
+
 #include "../Utils/vec.h"
 #include "summation.h"
 #include <random>
-#include <qd/dd_real.h>
 
 template <typename Type>
-static const Type Gamma = 6.6743e-11;
+static const Type Gamma(6.6743e-11);
 
 template <class Type>
-struct Body {
+struct Body{
     Type m;
     vec<Type> r, v;
 
@@ -60,7 +63,6 @@ vec<Type> force(const vec<Type>& v1, const vec<Type>& v2, Type m1, Type m2){
 template<typename Type>
 void copyBodies(const std::vector<Body<Type>> &bodies, std::vector<Body<Type>> &newBodies){
     newBodies.clear();
-    newBodies.reserve(bodies.size());
     for(int i = 0; i < bodies.size(); i++){
         newBodies.push_back(bodies[i]);
     }
@@ -117,13 +119,6 @@ void f(const std::vector<Body<Type>> &bodies,
     acceleration_proxy<Type> a(bodies, body_1_idx);
     vec<Type> total_force = 
       summation<vec<Type>, acceleration_proxy<Type>>(a, bodies.size());
-    //vec<Type> total_force(Type(0), Type(0), Type(0));
-    //for (int body_2_idx = 0; body_2_idx < bodies.size(); body_2_idx++) {
-    //  if (body_1_idx == body_2_idx) continue;
-    //
-    //  total_force +=
-    //      bodies[body_1_idx].IteractSubtotalForce(bodies[body_2_idx]);
-    //}
     fbodies[body_1_idx].r = bodies[body_1_idx].v;
     fbodies[body_1_idx].v = total_force;
   }

@@ -5,8 +5,9 @@
 #ifndef NBODIES_SUMMATION_H
 #define NBODIES_SUMMATION_H
 
-#include "energy.h"
+#ifdef NUMBER_DOUBLE_DOUBLE
 #include <qd/dd_real.h>
+#endif
 
 
 
@@ -53,7 +54,7 @@ template <class Type, class A>
 Type summation(const A& container, size_t size){
     Type correction(0);
 
-    return summation_neumaier(container, 0, size, correction);
+    return summation_arr(container, 0, size, &correction);
 }
 
 #endif //NBODIES_SUMMATION_H
