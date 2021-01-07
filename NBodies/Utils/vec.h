@@ -1,6 +1,3 @@
-//
-// Created by Максим on 28.12.2020.
-//
 
 #ifndef NBODIES_VEC_H
 #define NBODIES_VEC_H

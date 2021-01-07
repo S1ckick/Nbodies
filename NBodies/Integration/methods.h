@@ -1,6 +1,3 @@
-//
-// Created by Максим on 28.12.2020.
-//
 
 #ifndef NBODIES_METHODS_H
 #define NBODIES_METHODS_H
@@ -153,14 +150,14 @@ std::vector<Type> initDDCoef() {
 #endif
 #ifdef NUMBER_DOUBLE
 
-            b1 =   Type(5.42937341165687622380535766363E-2);
-            b6 =   Type(4.45031289275240888144113950566E0);
-            b7 =   Type(1.89151789931450038304281599044E0);
-            b8 =  Type(-5.8012039600105847814672114227E0);
-            b9 =   Type(3.1116436695781989440891606237E-1);
-            b10 = Type(-1.52160949662516078556178806805E-1);
-            b11 =  Type(2.01365400804030348374776537501E-1);
-            b12 =  Type(4.47106157277725905176885569043E-2);
+            b1  =    Type(5.42937341165687622380535766363E-2);
+            b6  =    Type(4.45031289275240888144113950566E0);
+            b7  =    Type(1.89151789931450038304281599044E0);
+            b8  =    Type(-5.8012039600105847814672114227E0);
+            b9  =    Type(3.1116436695781989440891606237E-1);
+            b10 =    Type(-1.52160949662516078556178806805E-1);
+            b11 =    Type(2.01365400804030348374776537501E-1);
+            b12 =    Type(4.47106157277725905176885569043E-2);
 
 
             a21 =    Type(5.26001519587677318785587544488E-2);
@@ -177,42 +174,42 @@ std::vector<Type> initDDCoef() {
             a71 =    Type(3.7109375E-2);
             a74 =    Type(1.70252211019544039314978060272E-1);
             a75 =    Type(6.02165389804559606850219397283E-2);
-            a76 =   Type(-1.7578125E-2);
+            a76 =    Type(-1.7578125E-2);
 
             a81 =    Type(3.70920001185047927108779319836E-2);
             a84 =    Type(1.70383925712239993810214054705E-1);
             a85 =    Type(1.07262030446373284651809199168E-1);
-            a86 =   Type(-1.53194377486244017527936158236E-2);
+            a86 =    Type(-1.53194377486244017527936158236E-2);
             a87 =    Type(8.27378916381402288758473766002E-3);
             a91 =    Type(6.24110958716075717114429577812E-1);
-            a94 =   Type(-3.36089262944694129406857109825E0);
-            a95 =   Type(-8.68219346841726006818189891453E-1);
+            a94 =    Type(-3.36089262944694129406857109825E0);
+            a95 =    Type(-8.68219346841726006818189891453E-1);
             a96 =    Type(2.75920996994467083049415600797E1);
             a97 =    Type(2.01540675504778934086186788979E1);
-            a98 =   Type(-4.34898841810699588477366255144E1);
+            a98 =    Type(-4.34898841810699588477366255144E1);
             a101 =   Type(4.77662536438264365890433908527E-1);
-            a104 =  Type(-2.48811461997166764192642586468E0);
-            a105 =  Type(-5.90290826836842996371446475743E-1);
+            a104 =   Type(-2.48811461997166764192642586468E0);
+            a105 =   Type(-5.90290826836842996371446475743E-1);
             a106 =   Type(2.12300514481811942347288949897E1);
             a107 =   Type(1.52792336328824235832596922938E1);
-            a108 =  Type(-3.32882109689848629194453265587E1);
-            a109 =  Type(-2.03312017085086261358222928593E-2);
+            a108 =   Type(-3.32882109689848629194453265587E1);
+            a109 =   Type(-2.03312017085086261358222928593E-2);
 
-            a111 =  Type(-9.3714243008598732571704021658E-1);
+            a111 =   Type(-9.3714243008598732571704021658E-1);
             a114 =   Type(5.18637242884406370830023853209E0);
             a115 =   Type(1.09143734899672957818500254654E0);
-            a116 =  Type(-8.14978701074692612513997267357E0);
-            a117 =  Type(-1.85200656599969598641566180701E1);
+            a116 =   Type(-8.14978701074692612513997267357E0);
+            a117 =   Type(-1.85200656599969598641566180701E1);
             a118 =   Type(2.27394870993505042818970056734E1);
             a119 =   Type(2.49360555267965238987089396762E0);
-            a1110 = Type(-3.0467644718982195003823669022E0);
+            a1110 =  Type(-3.0467644718982195003823669022E0);
             a121 =   Type(2.27331014751653820792359768449E0);
-            a124 =  Type(-1.05344954667372501984066689879E1);
-            a125 =  Type(-2.00087205822486249909675718444E0);
-            a126 =  Type(-1.79589318631187989172765950534E1);
+            a124 =   Type(-1.05344954667372501984066689879E1);
+            a125 =   Type(-2.00087205822486249909675718444E0);
+            a126 =   Type(-1.79589318631187989172765950534E1);
             a127 =   Type(2.79488845294199600508499808837E1);
-            a128 =  Type(-2.85899827713502369474065508674E0);
-            a129 =  Type(-8.87285693353062954433549289258E0);
+            a128 =   Type(-2.85899827713502369474065508674E0);
+            a129 =   Type(-8.87285693353062954433549289258E0);
             a1210 =  Type(1.23605671757943030647266201528E1);
             a1211 =  Type(6.43392746015763530355970484046E-1);
 #endif
@@ -220,63 +217,63 @@ std::vector<Type> initDDCoef() {
         std::vector<Type> items;
         items.push_back(a21);
         items.push_back(a31);
-      items.push_back(a32);
-      items.push_back(a41);
-      items.push_back(a43);
-      items.push_back(a51);
-      items.push_back(a53);
-      items.push_back(a54);
-      items.push_back(a61);
-      items.push_back(a64);
-      items.push_back(a65);
-      items.push_back(a71);
-      items.push_back(a74);
-      items.push_back(a75);
-      items.push_back(a76);
-      items.push_back(a81);
-      items.push_back(a84);
-    items.push_back(a85);
-    items.push_back(a86);
-    items.push_back(a87);
-    items.push_back(a91);
-    items.push_back(a94);
-    items.push_back(a95);
-    items.push_back(a96);
-    items.push_back(a97);
-    items.push_back(a98);
-    items.push_back(a101);
-    items.push_back(a104);
-    items.push_back(a105);
-    items.push_back(a106);
-    items.push_back(a107);
-    items.push_back(a108);
-    items.push_back(a109);
-    items.push_back(a111);
-    items.push_back(a114);
-    items.push_back(a115);
-    items.push_back(a116);
-    items.push_back(a117);
-    items.push_back(a118);
-    items.push_back(a119);
-    items.push_back(a1110);
-    items.push_back(a121);
-    items.push_back(a124);
-    items.push_back(a125);
-    items.push_back(a126);
-    items.push_back(a127);
-    items.push_back(a128);
-    items.push_back(a129);
-    items.push_back(a1210);
-    items.push_back(a1211);
+        items.push_back(a32);
+        items.push_back(a41);
+        items.push_back(a43);
+        items.push_back(a51);
+        items.push_back(a53);
+        items.push_back(a54);
+        items.push_back(a61);
+        items.push_back(a64);
+        items.push_back(a65);
+        items.push_back(a71);
+        items.push_back(a74);
+        items.push_back(a75);
+        items.push_back(a76);
+        items.push_back(a81);
+        items.push_back(a84);
+        items.push_back(a85);
+        items.push_back(a86);
+        items.push_back(a87);
+        items.push_back(a91);
+        items.push_back(a94);
+        items.push_back(a95);
+        items.push_back(a96);
+        items.push_back(a97);
+        items.push_back(a98);
+        items.push_back(a101);
+        items.push_back(a104);
+        items.push_back(a105);
+        items.push_back(a106);
+        items.push_back(a107);
+        items.push_back(a108);
+        items.push_back(a109);
+        items.push_back(a111);
+        items.push_back(a114);
+        items.push_back(a115);
+        items.push_back(a116);
+        items.push_back(a117);
+        items.push_back(a118);
+        items.push_back(a119);
+        items.push_back(a1110);
+        items.push_back(a121);
+        items.push_back(a124);
+        items.push_back(a125);
+        items.push_back(a126);
+        items.push_back(a127);
+        items.push_back(a128);
+        items.push_back(a129);
+        items.push_back(a1210);
+        items.push_back(a1211);
 
-    items.push_back(b1);
-    items.push_back(b6);
-    items.push_back(b7);
-    items.push_back(b8);
-    items.push_back(b9);
-    items.push_back(b10);
-    items.push_back(b11);
-    items.push_back(b12);
+        items.push_back(b1);
+        items.push_back(b6);
+        items.push_back(b7);
+        items.push_back(b8);
+        items.push_back(b9);
+        items.push_back(b10);
+        items.push_back(b11);
+        items.push_back(b12);
 
     return items;
 }

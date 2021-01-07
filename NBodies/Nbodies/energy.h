@@ -1,6 +1,3 @@
-//
-// Created by Максим on 29.12.2020.
-//
 
 #ifndef NBODIES_ENERGY_H
 #define NBODIES_ENERGY_H

@@ -1,6 +1,3 @@
-//
-// Created by Максим on 28.12.2020.
-//
 
 #ifndef NBODIES_NBODIES_H
 #define NBODIES_NBODIES_H

@@ -1,6 +1,3 @@
-//
-// Created by Максим on 01.01.2021.
-//
 
 #ifndef NBODIES_SUMMATION_H
 #define NBODIES_SUMMATION_H

@@ -1,6 +1,3 @@
-//
-// Created by Максим on 07.01.2021.
-//
 
 #ifndef NBODIES_HELPER_H
 #define NBODIES_HELPER_H

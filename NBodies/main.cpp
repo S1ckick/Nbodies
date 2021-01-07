@@ -43,8 +43,9 @@ int main() {
     bodies.push_back(Body<current_type>({ current_type(0), current_type(1.2e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
     bodies.push_back(Body<current_type>({ current_type(0), current_type(1.1e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
     bodies.push_back(Body<current_type>({ current_type(0), current_type(1.56e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
-    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.5e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
-    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.51e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
+    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.5e3), current_type(0) },{ current_type(1),current_type(0),current_type(3) },current_type(6)));
+    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.55e3), current_type(0) },{ current_type(-1),current_type(0),current_type(3) },current_type(6)));
+    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.51e3), current_type(0) },{ current_type(0),current_type(0),current_type(3) },current_type(6)));
 
 
     current_type init_energy = summation<current_type, kinetic_energy_proxy<current_type>>(kinetic_energy_proxy(bodies), bodies.size()) / current_type(2) +
