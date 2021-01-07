@@ -43,13 +43,13 @@ int main() {
     bodies.push_back(Body<current_type>({ current_type(0), current_type(1.2e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
     bodies.push_back(Body<current_type>({ current_type(0), current_type(1.1e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
     bodies.push_back(Body<current_type>({ current_type(0), current_type(1.56e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
-    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.5e3), current_type(0) },{ current_type(1),current_type(0),current_type(3) },current_type(6)));
-    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.55e3), current_type(0) },{ current_type(-1),current_type(0),current_type(3) },current_type(6)));
-    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.51e3), current_type(0) },{ current_type(0),current_type(0),current_type(3) },current_type(6)));
+    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.5e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
+    bodies.push_back(Body<current_type>({ current_type(0), current_type(1.51e3), current_type(0) },{ current_type(3),current_type(0),current_type(0) },current_type(6)));
+
 
 
     current_type init_energy = summation<current_type, kinetic_energy_proxy<current_type>>(kinetic_energy_proxy(bodies), bodies.size()) / current_type(2) +
-                         summation<current_type, potential_energy_proxy<current_type>>(potential_energy_proxy(bodies), bodies.size() * bodies.size()) / current_type(2);
+                         summation<current_type, potential_energy_proxy<current_type>>(potential_energy_proxy(bodies), bodies.size() * bodies.size()) / current_type(2) ;
 
     vec<current_type> init_impulse_moment = summation<vec<current_type>, impulse_moment_proxy<vec<current_type>,current_type>>(impulse_moment_proxy<vec<current_type>,current_type>(bodies), bodies.size());
 
@@ -74,7 +74,7 @@ int main() {
     for (int i = 0; i < iterations; i++) {
          dormanPrince8(bodies, h, coefs);
 
-        if( true ) {
+        if( i % 100 == 0 ) {
             for(int j = 0; j < bodies.size(); j++){
 
 
@@ -115,15 +115,15 @@ int main() {
             data_impulse_moment["moment"].push_back(abs((impulse_moment - init_impulse_moment).Len() / init_impulse_moment.Len()));
 #endif
 
-            if(i > 1){
+
                 data_center["n"].push_back(i);
 #ifdef NUMBER_DOUBLE_DOUBLE
-                data_center["center"].push_back(center_mass.Len().to_string());
+                data_center["center"].push_back(abs((init_center_mass - center_mass).Len()).to_string());
 #endif
 #ifdef NUMBER_DOUBLE
-                data_center["center"].push_back(center_mass.Len());
+                data_center["center"].push_back(abs((init_center_mass - center_mass).Len()));
 #endif
-            }
+
 
 
         }

@@ -3,7 +3,7 @@ project(NBodies)
 
 set(CMAKE_CXX_STANDARD 20 )
 set(CMAKE_CXX_COMPILER /usr/local/bin/g++-10)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mlong-double-80")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mlong-double-128")
 
 include_directories("qd/2.3.22/include")
 link_directories("qd/2.3.22/lib")
