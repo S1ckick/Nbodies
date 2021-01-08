@@ -6,6 +6,7 @@
 #include <qd/dd_real.h>
 #endif
 
+#include <boost/multiprecision/float128.hpp>
 
 
 template<class Type, class A>

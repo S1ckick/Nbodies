@@ -10,6 +10,8 @@
 #include <cmath>
 #endif
 
+#include <boost/multiprecision/float128.hpp>
+
 
 template <class type>
 class vec {
@@ -174,7 +176,7 @@ public:
     }
 
     inline type Len2() const {
-        return type(X * X + Y * Y + Z * Z);
+        return X * X + Y * Y + Z * Z;
     }
 
     inline type &operator[](int I) {

@@ -8,14 +8,14 @@
 
 #include <vector>
 #include <string>
-
+#include <boost/multiprecision/float128.hpp>
 #include "nbodies.h"
 
 template<typename Type>
 Type potential_energy(const std::vector<Body<Type>> &bodies, size_t body1, size_t body2){
     vec<Type> dr = bodies[body1].r - bodies[body2].r;
-    Type r2 = dr.Len2();
-    return -(Gamma<Type> * bodies[body1].m * bodies[body2].m ) / sqrt(r2);
+    Type r2 = dr.Len();
+    return -((Gamma<Type> * bodies[body1].m * bodies[body2].m ) / r2);
 }
 
 template<typename Type>

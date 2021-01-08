@@ -9,6 +9,7 @@
 #include "../Utils/vec.h"
 #include "summation.h"
 #include <random>
+#include <boost/multiprecision/float128.hpp>
 
 template <typename Type>
 static const Type Gamma(6.6743e-11);
