@@ -1,6 +1,9 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <chrono>
+#include <string>
+#include <filesystem>
 
 #define NUMBER_DOUBLE 1
 //#define NUMBER_DOUBLE_DOUBLE 1
@@ -13,16 +16,18 @@
 #ifdef NUMBER_DOUBLE_DOUBLE
 #include <qd/dd_real.h>
 #include <qd/fpu.h>
-#endif
 
-#include <string>
+using current_type = dd_real;
+#else
+using current_type = long double;
+#endif
 
 #include "Utils/helper.h"
 
 using namespace std;
 
-#include <chrono>
 int main() {
+  std::cout << std::filesystem::current_path();
 #ifdef NUMBER_DOUBLE_DOUBLE
   unsigned int oldcw;
   fpu_fix_start(&oldcw);
@@ -70,14 +75,15 @@ int main() {
           bodies.size());
   init_vel_mass = init_vel_mass / total_mass;
 
-  for (int i = 0; i < bodies.size(); i++) {
-    // bodies[i].r -= init_center_mass;
-    // bodies[i].v -= init_vel_mass;
-  }
+  std::vector<current_type> data_bodies, data_energy, data_impulse_moment, data_center;
 
-  json data_energy, data_impulse_moment, data_center, data_bodies;
   current_type h(0.3);
   int iterations = 100000;
+
+  data_bodies.resize(bodies.size() * iterations * 3);
+  data_energy.resize(iterations);
+  data_impulse_moment.resize(iterations);
+  data_center.resize(iterations);
 
   std::vector<current_type> coefs = initDDCoef<current_type>();
   auto start = std::chrono::high_resolution_clock::now();
@@ -86,17 +92,9 @@ int main() {
     RungeKutta4(bodies, h);
 
     for (int j = 0; j < bodies.size(); j++) {
-#ifdef NUMBER_DOUBLE_DOUBLE
-      data_bodies[j]["X"][i] = bodies[j].r.X._hi();
-      data_bodies[j]["Y"][i] = bodies[j].r.Y._hi();
-      data_bodies[j]["Z"][i] = bodies[j].r.Z._hi();
-#endif
-#ifdef NUMBER_DOUBLE
-
-      data_bodies[j]["X"][i] = bodies[j].r.X;
-      data_bodies[j]["Y"][i] = bodies[j].r.Y;
-      data_bodies[j]["Z"][i] = bodies[j].r.Z;
-#endif
+      data_bodies[3 * (j + bodies.size() * i)] = bodies[j].r.X;
+      data_bodies[1 + 3 * (j + bodies.size() * i)] = bodies[j].r.Y;
+      data_bodies[2 + 3 * (j + bodies.size() * i)] = bodies[j].r.Z;
     }
 
     vec<current_type> center_mass =
@@ -120,45 +118,26 @@ int main() {
             impulse_moment_proxy<vec<current_type>, current_type>(bodies),
             bodies.size());
 
-    data_energy["n"].push_back(i);
-#ifdef NUMBER_DOUBLE_DOUBLE
-    data_energy["energy"].push_back(
-        (abs((energy - init_energy) / init_energy)).to_string());
-#endif
-#ifdef NUMBER_DOUBLE
-    data_energy["energy"].push_back(abs((energy - init_energy) / init_energy));
-#endif
+    data_energy[i] = (abs((energy - init_energy) / init_energy));
 
-    data_impulse_moment["n"].push_back(i);
-#ifdef NUMBER_DOUBLE_DOUBLE
-    data_impulse_moment["moment"].push_back(
-        abs((impulse_moment - init_impulse_moment).Len() /
-            init_impulse_moment.Len())
-            .to_string());
-#endif
-#ifdef NUMBER_DOUBLE
-    data_impulse_moment["moment"].push_back(
+    data_impulse_moment[i] = (
         abs((impulse_moment - init_impulse_moment).Len() /
             init_impulse_moment.Len()));
-#endif
 
-    data_center["n"].push_back(i);
-#ifdef NUMBER_DOUBLE_DOUBLE
-    data_center["center"].push_back(
-        abs((init_center_mass - center_mass).Len()).to_string());
-#endif
-#ifdef NUMBER_DOUBLE
-    data_center["center"].push_back(
-        abs((init_center_mass - center_mass).Len()));
-#endif
+    data_center[i] = (abs((init_center_mass - center_mass).Len()));
   }
   auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-  printf("time: %lld microseconds \n", duration.count());
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "time: " << duration.count() << " microseconds \n";
+
+  json xyz_data;
+  xyz_data["coords"] = data_bodies;
+  xyz_data["iter"] = iterations;
+  xyz_data["num"] = bodies.size();
 
   writer<current_type> w;
   w.writeRes("../log.json", data_energy);
-  w.writeRes("../bodies.json", data_bodies);
+  w.writeRes("../bodies.json", xyz_data);
   w.writeRes("../moment.json", data_impulse_moment);
   w.writeRes("../center.json", data_center);
 

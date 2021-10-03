@@ -1,13 +1,11 @@
-cmake_minimum_required(VERSION 3.17)
-project(NBodies)
+cmake_minimum_required(VERSION 3.14)
+project(NBodies LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20 )
+set(CMAKE_CXX_STANDARD 17)
 
 include_directories("qd/2.3.22/include")
 link_directories("qd/2.3.22/lib")
 
-add_executable(NBodies main.cpp Utils/vec.h Integration/methods.h Nbodies/nbodies.h Writer/writer.h Nbodies/energy.h Nbodies/summation.h Utils/helper.h)
+add_executable(NBodies main.cpp)
 
-target_link_libraries(NBodies qd)
-target_link_libraries(NBodies qdmod)
-target_link_libraries(NBodies qd_f_main)
+target_link_libraries(NBodies qd qdmod qd_f_main)
