@@ -9,7 +9,6 @@
 #include "../Utils/vec.h"
 #include "summation.h"
 #include <random>
-#include <boost/multiprecision/float128.hpp>
 
 template <typename Type>
 static const Type Gamma(6.6743e-11);
@@ -164,19 +163,6 @@ void add_galaxy(std::vector<Body<Type>> &bodies,const vec<Type>&center, const ve
         v*= sqrt(force(r, center, star_mass, effective_mass).Len() * (r - center).Len() / star_mass);
         bodies.push_back({r, v + velocity, star_mass});
     }
-}
-
-template <typename Type>
-void make_universe(std::vector<Body<Type>> &bodies, size_t star_count, Type sx, Type sy, Type sz) {
-    Type radius = sx * Type(0.5);
-    Type galaxy_mass = Type(1e8);
-    vec<Type> center{sx * Type(0.5), sy * Type(0.5), sz * Type(0.5)};
-    vec<Type> base{radius, Type(0), Type(0)};
-    vec<Type> velosity{Type(0), sqrt(force(vec<Type>(), base, galaxy_mass, galaxy_mass).Len() * (base).Len() /
-                                     (Type(2) * galaxy_mass)), Type(0)};
-
-    add_galaxy(bodies, center - base, velosity / Type(3), radius, galaxy_mass, star_count);
-    add_galaxy(bodies, center + base, -velosity / Type(3), radius, galaxy_mass, star_count);
 }
 
 #endif //NBODIES_NBODIES_H

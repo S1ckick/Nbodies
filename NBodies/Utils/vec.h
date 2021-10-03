@@ -10,7 +10,6 @@
 #include <cmath>
 #endif
 
-#include <boost/multiprecision/float128.hpp>
 
 
 template <class type>

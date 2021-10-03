@@ -6,8 +6,6 @@
 #include <qd/dd_real.h>
 #endif
 
-#include <boost/multiprecision/float128.hpp>
-
 
 template<class Type, class A>
 Type summation_neumaier(const A &container, size_t begin, size_t end, Type& correction){
