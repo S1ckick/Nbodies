@@ -1,10 +1,9 @@
 ﻿/.vs
 /NBodies/.vs
-/NBodies/out/build
+/Nbodies/.idea
+/Nbodies/.ipynb_checkpoints
 /build
 /.vscode
 /.ipynb_checkpoints
 /qd-2.3.22
 /NBodies/*.json
-
-
