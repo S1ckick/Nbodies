@@ -40,7 +40,7 @@ int main() {
   std::vector<Body<current_type>> bodies;
   std::string name;
   while (infile >> name >> m >> x >> y >> z >> vx >> vy >> vz) {
-    bodies.push_back(Body<current_type>({vx, vy, vz}, {x, y, z}, m));
+    bodies.push_back(Body<current_type>({x, y, z}, {vx, vy, vz}, m));
     std::cout << "parsed " << name << " : " << x << " " << y << " " << z << " "
               << vx << " " << vy << " " << vz << " " << m << std::endl;
   }
@@ -75,7 +75,9 @@ int main() {
           bodies.size());
   init_vel_mass = init_vel_mass / total_mass;
 
+
   std::vector<current_type> data_bodies, data_energy, data_impulse_moment, data_center;
+
 
   current_type h(0.3);
   int iterations = 100000;

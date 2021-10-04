@@ -5,11 +5,15 @@
 #ifdef NUMBER_DOUBLE_DOUBLE
 #include <qd/dd_real.h>
 #include "../Utils/helper.h"
-
 #endif
 
 #include "../Nbodies/nbodies.h"
 #include <vector>
+
+
+
+
+
 
 
 template <typename Type>
@@ -20,6 +24,14 @@ void Euler(std::vector<Body<Type>> &bodies, Type h) {
 
     std::vector<Body<Type>> temp;
     copyBodies(bodies, temp);
+
+
+    Type velocities[3*16], f_new[3*16];
+    for( int i = 0; i < temp.size(); i++){
+        velocities[3*i + 0] = temp[i].v.X;
+        velocities[3*i + 1] = temp[i].v.Y;
+        velocities[3*i + 2] = temp[i].v.Z;
+    }
 
     f(temp,k_1);
 
