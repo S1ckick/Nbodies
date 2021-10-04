@@ -7,3 +7,4 @@
 /.ipynb_checkpoints
 /qd-2.3.22
 /NBodies/*.json
+*.json

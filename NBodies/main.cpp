@@ -27,7 +27,7 @@ using current_type = long double;
 using namespace std;
 
 int main() {
-  std::cout << std::filesystem::current_path();
+
 #ifdef NUMBER_DOUBLE_DOUBLE
   unsigned int oldcw;
   fpu_fix_start(&oldcw);
@@ -35,7 +35,7 @@ int main() {
 
   using current_type = long double;
 
-  std::ifstream infile("../points.txt");
+  std::ifstream infile("points.txt");
   long double x, y, z, vx, vy, vz, m;
   std::vector<Body<current_type>> bodies;
   std::string name;
@@ -138,10 +138,10 @@ int main() {
   xyz_data["num"] = bodies.size();
 
   writer<current_type> w;
-  w.writeRes("../log.json", data_energy);
-  w.writeRes("../bodies.json", xyz_data);
-  w.writeRes("../moment.json", data_impulse_moment);
-  w.writeRes("../center.json", data_center);
+  w.writeRes("log.json", data_energy);
+  w.writeRes("bodies.json", xyz_data);
+  w.writeRes("moment.json", data_impulse_moment);
+  w.writeRes("center.json", data_center);
 
 #ifdef NUMBER_DOUBLE_DOUBLE
   fpu_fix_end(&oldcw);
