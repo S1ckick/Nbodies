@@ -44,6 +44,7 @@ int main() {
     std::cout << "parsed " << name << " : " << x << " " << y << " " << z << " "
               << vx << " " << vy << " " << vz << " " << m << std::endl;
   }
+  std::cout << bodies[0].r.X << std::endl;
 
   current_type init_energy =
       summation<current_type, kinetic_energy_proxy<current_type>>(
