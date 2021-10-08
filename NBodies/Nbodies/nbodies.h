@@ -58,6 +58,7 @@ template <typename Type>
 void copyBodies(const std::vector<Body<Type>> &bodies,
                 std::vector<Body<Type>> &newBodies) {
   newBodies.clear();
+  newBodies.resize(bodies.size());
   for (int i = 0; i < bodies.size(); i++) {
     newBodies.push_back(bodies[i]);
   }

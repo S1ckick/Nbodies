@@ -60,26 +60,15 @@ void bodies_to_vec(std::vector<Type> &x, std::vector<Body<Type>> &bodies) {
 }
 
 template <typename Type>
-void RungeKutta4(std::vector<Body<Type>> &bodies, Type h) {
-  std::vector<Type> masses;
-  masses.resize(bodies.size());
-  for (int i = 0; i < bodies.size(); i++) {
-    masses[i] = bodies[i].m;
-  }
-  ObjectsData<Type>* objects= new ObjectsData<Type>(masses);
+void RungeKutta4(std::vector<Type> &x, Type h,
+                 ObjectsData<Type> &objects) {
   std::vector<Type> prev_x, new_x;
   prev_x.resize(bodies.size() * 6);
   new_x.resize(bodies.size() * 6);
 
-  std::vector<Body<Type>> k_1;
-  copyBodies(bodies, k_1);
-
-  std::vector<Body<Type>> temp;
-  copyBodies(bodies, temp);
-
-  bodies_to_vec(prev_x, temp);
-  pointmassesCalculateXdot(prev_x, new_x, objects);
-  vec_to_bodies(new_x, k_1);
+  std::vector<Type> k_1;
+  k_1.resize(objects.n_objects*6);
+  pointmassesCalculateXdot(x, k_1, objects);
 
   // temp = bodies + 0.5*k1*h
   copyBodies(bodies + k_1 * (Type(0.5) * h), temp);
@@ -118,7 +107,6 @@ void RungeKutta4(std::vector<Body<Type>> &bodies, Type h) {
 
   // y += 	dt( k_1/6 + k_2/3 + k_3/3 + k_4/6 )
   copyBodies(bodies + (k_1 + k_2 + k_3 + k_4) * h, bodies);
-  delete objects;
 }
 
 template <typename Type>

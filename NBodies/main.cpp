@@ -1,9 +1,9 @@
+#include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <vector>
-#include <chrono>
 #include <string>
-#include <filesystem>
+#include <vector>
 
 #define NUMBER_DOUBLE 1
 //#define NUMBER_DOUBLE_DOUBLE 1
@@ -27,7 +27,6 @@ using current_type = long double;
 using namespace std;
 
 int main() {
-
 #ifdef NUMBER_DOUBLE_DOUBLE
   unsigned int oldcw;
   fpu_fix_start(&oldcw);
@@ -35,7 +34,7 @@ int main() {
 
   using current_type = long double;
 
-  std::ifstream infile("points.txt");
+  std::ifstream infile("../points.txt");
   long double x, y, z, vx, vy, vz, m;
   std::vector<Body<current_type>> bodies;
   std::string name;
@@ -76,9 +75,8 @@ int main() {
           bodies.size());
   init_vel_mass = init_vel_mass / total_mass;
 
-
-  std::vector<current_type> data_bodies, data_energy, data_impulse_moment, data_center;
-
+  std::vector<current_type> data_bodies, data_energy, data_impulse_moment,
+      data_center;
 
   current_type h(0.3);
   int iterations = 100000;
@@ -88,11 +86,30 @@ int main() {
   data_impulse_moment.resize(iterations);
   data_center.resize(iterations);
 
+  std::vector<current_type> masses;
+  masses.resize(bodies.size());
+  for (int i = 0; i < bodies.size(); i++) {
+    masses[i] = bodies[i].m;
+  }
+  ObjectsData<current_type> objects(masses);
+
   std::vector<current_type> coefs = initDDCoef<current_type>();
   auto start = std::chrono::high_resolution_clock::now();
 
+  std::vector<current_type> x;
+  x.resize(bodies.size() * 6);
+  for (int i = 0; i < bodies.size(); i++) {
+    x[i * 6] = bodies[i].r.X;
+    x[i * 6 + 1] = bodies[i].r.Y;
+    x[i * 6 + 2] = bodies[i].r.Z;
+
+    x[i * 6 + 3] = bodies[i].v.X;
+    x[i * 6 + 4] = bodies[i].v.Y;
+    x[i * 6 + 5] = bodies[i].v.Z;
+  }
+
   for (int i = 0; i < iterations; i++) {
-    RungeKutta4(bodies, h);
+    RungeKutta4(x, h, objects);
 
     for (int j = 0; j < bodies.size(); j++) {
       data_bodies[3 * (j + bodies.size() * i)] = bodies[j].r.X;
@@ -123,14 +140,14 @@ int main() {
 
     data_energy[i] = (abs((energy - init_energy) / init_energy));
 
-    data_impulse_moment[i] = (
-        abs((impulse_moment - init_impulse_moment).Len() /
-            init_impulse_moment.Len()));
+    data_impulse_moment[i] = (abs((impulse_moment - init_impulse_moment).Len() /
+                                  init_impulse_moment.Len()));
 
     data_center[i] = (abs((init_center_mass - center_mass).Len()));
   }
   auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  auto duration =
+      std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
   std::cout << "time: " << duration.count() << " microseconds \n";
 
   json xyz_data;
