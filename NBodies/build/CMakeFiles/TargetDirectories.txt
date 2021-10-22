@@ -1,0 +1,3 @@
+/Users/maksim/labs/Nbodies/NBodies/build/CMakeFiles/rebuild_cache.dir
+/Users/maksim/labs/Nbodies/NBodies/build/CMakeFiles/edit_cache.dir
+/Users/maksim/labs/Nbodies/NBodies/build/CMakeFiles/NBodies.dir

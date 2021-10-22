@@ -1,3 +1,5 @@
+#include <cmath>
+#include <iostream>
 #include <vector>
 const int earthNum = 3;
 const int moonNum = 10;
@@ -12,12 +14,12 @@ class ObjectsData {
     for (int i = 0; i < data.size(); i++) {
       this->masses[i] = data[i];
     }
-    this->dx.resize(this->n_objects);
-    this->dy.resize(this->n_objects);
-    this->dz.resize(this->n_objects);
-    this->dist.resize(this->n_objects);
-    this->dist2.resize(this->n_objects);
-    this->dist3.resize(this->n_objects);
+    this->dx.resize(this->n_objects * (this->n_objects + 1));
+    this->dy.resize(this->n_objects * (this->n_objects + 1));
+    this->dz.resize(this->n_objects * (this->n_objects + 1));
+    this->dist.resize(this->n_objects * (this->n_objects + 1));
+    this->dist2.resize(this->n_objects * (this->n_objects + 1));
+    this->dist3.resize(this->n_objects * (this->n_objects + 1));
     this->temp_acc.resize(this->n_objects * 3);
   }
 
@@ -64,7 +66,8 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
       Type _dx = x[6 * j] - x[6 * i], _dy = x[6 * j + 1] - x[6 * i + 1],
            _dz = x[6 * j + 2] - x[6 * i + 2];
       Type _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
-      Type _dist = std::sqrt(_dist2);
+      Type _dist = std::sqrtf(_dist2);
+
       Type _dist3 = _dist * _dist2;
 
       userdata->dx[i * barrier + j] = _dx;
@@ -104,28 +107,6 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
       f[6 * j + 4] -= userdata->masses[i] * k_dy;
       f[6 * j + 5] -= userdata->masses[i] * k_dz;
     }
-
-    // simplified continuation of the above loop
-    for (j = barrier; j < userdata->n_objects; j++) {
-      Type _dx = x[6 * j] - x[6 * i], _dy = x[6 * j + 1] - x[6 * i + 1],
-           _dz = x[6 * j + 2] - x[6 * i + 2];
-      Type _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
-      Type _dist = std::sqrt(_dist2);
-
-      Type _dist3 = _dist * _dist2;
-
-      Type k_dx = _dx * _dist3;
-      Type k_dy = _dy * _dist3;
-      Type k_dz = _dz * _dist3;
-
-      f[6 * i + 3] += userdata->masses[j] * k_dx;
-      f[6 * i + 4] += userdata->masses[j] * k_dy;
-      f[6 * i + 5] += userdata->masses[j] * k_dz;
-
-      f[6 * j + 3] -= userdata->masses[i] * k_dx;
-      f[6 * j + 4] -= userdata->masses[i] * k_dy;
-      f[6 * j + 5] -= userdata->masses[i] * k_dz;
-    }
   }
 
   // Relativistic forces computation
@@ -136,6 +117,8 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
     userdata->temp_acc[3 * i + 2] = f[6 * i + 5];
   }
 
+  Type revLS2 =
+      0.00003341240936883958702262020114270440041431387617361087908049049416953456513749206455277490059808212770222860770490160045440876741621838350763473554077984563466871596110795549467072070567008586989207791773864813391693675030906478666176617995923686057001570383240335460590063149453707106819472752180159711316783053225968124561462127033980420328109860002004744562130375221357212068562264024858832570416652744829429650172073908249523873166494035884927662133716462294096027264526044973103010458084132446790738080122957666477329680243242340205152193524675064318888035016205018543887199705970797554211634200942229944201276354037889672224264091683651308095826790069831935580874736877276220388252196865916001202846737278225132814327241137358414915299542249991646897657790103244344949714323899896421530956597280229877376457616358715626983861806274850479468074442848073774599886397808145945404123091316114805038591332821009723011126332319823582478532526980520565337966520765812422733803334558455010190784857496074041899161348524842126365732232951;
   for (i = 0; i < barrier; ++i) {
     Type vi_sqr = x[6 * i + 3] * x[6 * i + 3] + x[6 * i + 4] * x[6 * i + 4] +
                   x[6 * i + 5] * x[6 * i + 5];
@@ -166,14 +149,15 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
 
       Type t1 = -4.0 * sum_i - sum_j + vi_sqr + 2.0 * vj_sqr - 4.0 * vi_dot_vj;
       Type t2 = userdata->dist[ij] * (-userdata->dx[ij] * x[6 * j + 3] +
-                                     -userdata->dy[ij] * x[6 * j + 4] +
-                                     -userdata->dz[ij] * x[6 * j + 5]);
+                                      -userdata->dy[ij] * x[6 * j + 4] +
+                                      -userdata->dz[ij] * x[6 * j + 5]);
       t2 = -1.5 * t2 * t2;
       Type t3 = 0.5 * (userdata->dx[ij] * userdata->temp_acc[3 * j] +
                        userdata->dy[ij] * userdata->temp_acc[3 * j + 1] +
                        userdata->dz[ij] * userdata->temp_acc[3 * j + 2]);
 
-      Type c1 = userdata->masses[j] * userdata->dist3[ij] * (t1 + t2 + t3);
+      Type c1 =
+          revLS2 * userdata->masses[j] * userdata->dist3[ij] * (t1 + t2 + t3);
       f[6 * i + 3] += userdata->dx[ij] * c1;
       f[6 * i + 4] += userdata->dy[ij] * c1;
       f[6 * i + 5] += userdata->dz[ij] * c1;
@@ -183,7 +167,7 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
                  -userdata->dy[ij] * (4 * x[6 * i + 4] - 3 * x[6 * j + 4]) +
                  -userdata->dz[ij] * (4 * x[6 * i + 5] - 3 * x[6 * j + 5]));
 
-      Type c2 = userdata->masses[j] * userdata->dist2[ij] * p1;
+      Type c2 = revLS2 * userdata->masses[j] * userdata->dist2[ij] * p1;
 
       Type dv_x = x[6 * i + 3] - x[6 * j + 3];
       Type dv_y = x[6 * i + 4] - x[6 * j + 4];
@@ -192,7 +176,7 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
       f[6 * i + 4] += dv_y * c2;
       f[6 * i + 5] += dv_z * c2;
 
-      Type c3 = 3.5 * userdata->masses[j] * userdata->dist[ij];
+      Type c3 = revLS2 * 3.5 * userdata->masses[j] * userdata->dist[ij];
       f[6 * i + 3] += userdata->temp_acc[3 * j] * c3;
       f[6 * i + 4] += userdata->temp_acc[3 * j + 1] * c3;
       f[6 * i + 5] += userdata->temp_acc[3 * j + 2] * c3;

@@ -118,6 +118,7 @@ void RungeKutta4(std::vector<Body<Type>> &bodies, Type h) {
 
   // y += 	dt( k_1/6 + k_2/3 + k_3/3 + k_4/6 )
   copyBodies(bodies + (k_1 + k_2 + k_3 + k_4) * h, bodies);
+
   delete objects;
 }
 

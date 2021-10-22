@@ -1,9 +1,9 @@
+#include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <vector>
-#include <chrono>
 #include <string>
-#include <filesystem>
+#include <vector>
 
 #define NUMBER_DOUBLE 1
 //#define NUMBER_DOUBLE_DOUBLE 1
@@ -27,7 +27,6 @@ using current_type = long double;
 using namespace std;
 
 int main() {
-
 #ifdef NUMBER_DOUBLE_DOUBLE
   unsigned int oldcw;
   fpu_fix_start(&oldcw);
@@ -35,7 +34,7 @@ int main() {
 
   using current_type = long double;
 
-  std::ifstream infile("points.txt");
+  std::ifstream infile("../points.txt");
   long double x, y, z, vx, vy, vz, m;
   std::vector<Body<current_type>> bodies;
   std::string name;
@@ -76,12 +75,11 @@ int main() {
           bodies.size());
   init_vel_mass = init_vel_mass / total_mass;
 
+  std::vector<current_type> data_bodies, data_energy, data_impulse_moment,
+      data_center;
 
-  std::vector<current_type> data_bodies, data_energy, data_impulse_moment, data_center;
-
-
-  current_type h(0.3);
-  int iterations = 100000;
+  current_type h(0.0625);
+  int iterations = 14610;
 
   data_bodies.resize(bodies.size() * iterations * 3);
   data_energy.resize(iterations);
@@ -123,14 +121,14 @@ int main() {
 
     data_energy[i] = (abs((energy - init_energy) / init_energy));
 
-    data_impulse_moment[i] = (
-        abs((impulse_moment - init_impulse_moment).Len() /
-            init_impulse_moment.Len()));
+    data_impulse_moment[i] = (abs((impulse_moment - init_impulse_moment).Len() /
+                                  init_impulse_moment.Len()));
 
     data_center[i] = (abs((init_center_mass - center_mass).Len()));
   }
   auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  auto duration =
+      std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
   std::cout << "time: " << duration.count() << " microseconds \n";
 
   json xyz_data;
