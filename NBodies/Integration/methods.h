@@ -14,26 +14,6 @@
 #include "pointmasses.h"
 
 template <typename Type>
-void Euler(std::vector<Body<Type>> &bodies, Type h) {
-  std::vector<Body<Type>> k_1;
-  copyBodies(bodies, k_1);
-
-  std::vector<Body<Type>> temp;
-  copyBodies(bodies, temp);
-
-  Type velocities[3 * 16], f_new[3 * 16];
-  for (int i = 0; i < temp.size(); i++) {
-    velocities[3 * i + 0] = temp[i].v.X;
-    velocities[3 * i + 1] = temp[i].v.Y;
-    velocities[3 * i + 2] = temp[i].v.Z;
-  }
-
-  f(temp, k_1);
-
-  copyBodies(bodies + k_1 * h, bodies);
-}
-
-template <typename Type>
 void vec_to_bodies(std::vector<Type> &x, std::vector<Body<Type>> &bodies) {
   for (int i = 0; i < bodies.size(); i++) {
     bodies[i].r.X = x[i * 6];
@@ -60,66 +40,55 @@ void bodies_to_vec(std::vector<Type> &x, std::vector<Body<Type>> &bodies) {
 }
 
 template <typename Type>
-void RungeKutta4(std::vector<Body<Type>> &bodies, Type h) {
-  std::vector<Type> masses;
-  masses.resize(bodies.size());
-  for (int i = 0; i < bodies.size(); i++) {
-    masses[i] = bodies[i].m;
+void Euler(std::vector<Type> &x, std::vector<Type> masses, Type h) {
+  ObjectsData<Type> *objects = new ObjectsData<Type>(masses);
+  std::vector<Type> k_1;
+  k_1.resize(x.size());
+
+  pointmassesCalculateXdot(x, k_1, objects);
+
+  for (int i = 0; i < x.size(); i++) {
+    x[i] = x[i] + k_1[i] * h;
   }
-  ObjectsData<Type>* objects= new ObjectsData<Type>(masses);
-  std::vector<Type> prev_x, new_x;
-  prev_x.resize(bodies.size() * 6);
-  new_x.resize(bodies.size() * 6);
+}
 
-  std::vector<Body<Type>> k_1;
-  copyBodies(bodies, k_1);
+template <typename Type>
+void RungeKutta4(std::vector<Type> &x, std::vector<Type> masses, Type h) {
+  ObjectsData<Type> *objects = new ObjectsData<Type>(masses);
+  std::vector<Type> prev_x, new_x, k_1, k_2, k_3, k_4;
+  prev_x.resize(x.size());
+  new_x.resize(x.size());
+  k_1.resize(x.size());
+  k_2.resize(x.size());
+  k_3.resize(x.size());
+  k_4.resize(x.size());
 
-  std::vector<Body<Type>> temp;
-  copyBodies(bodies, temp);
+  pointmassesCalculateXdot(x, k_1, objects);
 
-  bodies_to_vec(prev_x, temp);
-  pointmassesCalculateXdot(prev_x, new_x, objects);
-  vec_to_bodies(new_x, k_1);
+  for (int i = 0; i < x.size(); i++) {
+    prev_x[i] = x[i] + k_1[i] * Type(0.5) * h;
+  }
 
-  // temp = bodies + 0.5*k1*h
-  copyBodies(bodies + k_1 * (Type(0.5) * h), temp);
+  pointmassesCalculateXdot(prev_x, k_2, objects);
 
-  std::vector<Body<Type>> k_2;
-  copyBodies(bodies, k_2);
+  for (int i = 0; i < x.size(); i++) {
+    prev_x[i] = x[i] + k_2[i] * Type(0.5) * h;
+  }
 
-  bodies_to_vec(prev_x, temp);
-  pointmassesCalculateXdot(prev_x, new_x, objects);
-  vec_to_bodies(new_x, k_2);
+  pointmassesCalculateXdot(prev_x, k_3, objects);
 
-  // temp = bodies + 0.5*k2*h
-  copyBodies(bodies + k_2 * (h * Type(0.5)), temp);
+  for (int i = 0; i < x.size(); i++) {
+    prev_x[i] = x[i] + k_3[i] * h;
+  }
 
-  std::vector<Body<Type>> k_3;
-  copyBodies(bodies, k_3);
+  pointmassesCalculateXdot(prev_x, k_4, objects);
 
-  bodies_to_vec(prev_x, temp);
-  pointmassesCalculateXdot(prev_x, new_x, objects);
-  vec_to_bodies(new_x, k_3);
-
-  // temp = bodies + 1.0*k3*h
-  copyBodies(bodies + k_3 * h, temp);
-
-  std::vector<Body<Type>> k_4;
-  copyBodies(bodies, k_4);
-
-  bodies_to_vec(prev_x, temp);
-  pointmassesCalculateXdot(prev_x, new_x, objects);
-  vec_to_bodies(new_x, k_4);
-
-  copyBodies(k_1 * (Type(1) / Type(6)), k_1);
-  copyBodies(k_2 * (Type(1) / Type(3)), k_2);
-  copyBodies(k_3 * (Type(1) / Type(3)), k_3);
-  copyBodies(k_4 * (Type(1) / Type(6)), k_4);
-
-  // y += 	dt( k_1/6 + k_2/3 + k_3/3 + k_4/6 )
-  copyBodies(bodies + (k_1 + k_2 + k_3 + k_4) * h, bodies);
-
-  delete objects;
+  for (int i = 0; i < x.size(); i++) {
+    x[i] =
+        x[i] + (k_1[i] * (Type(1) / Type(6)) + k_2[i] * (Type(1) / Type(3)) +
+                k_3[i] * (Type(1) / Type(3)) + k_4[i] * (Type(1) / Type(6))) *
+                   h;
+  }
 }
 
 template <typename Type>

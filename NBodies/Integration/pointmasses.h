@@ -29,6 +29,7 @@ class ObjectsData {
   std::vector<Type> dist, dist2, dist3;
   std::vector<Type> temp_acc;
 };
+#define NO_RELATIVITY
 
 template <typename Type>
 void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
@@ -41,7 +42,7 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
     f[6 * i + 1] = x[6 * i + 4];
     f[6 * i + 2] = x[6 * i + 5];
   }
-
+  
   // Convert positions and velocities from EMB to barycentric in case of Earth
   // and Moon
   Type earth_x = x[6 * earthNum], earth_y = x[6 * earthNum + 1],
@@ -66,7 +67,7 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
       Type _dx = x[6 * j] - x[6 * i], _dy = x[6 * j + 1] - x[6 * i + 1],
            _dz = x[6 * j + 2] - x[6 * i + 2];
       Type _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
-      Type _dist = std::sqrtf(_dist2);
+      Type _dist = std::sqrtl(_dist2);
 
       Type _dist3 = _dist * _dist2;
 
