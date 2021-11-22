@@ -142,7 +142,7 @@ int main() {
     for (int j = i + 1; j < masses.size(); j++) {
       init_p_energy +=
           masses[i] * masses[j] /
-          std::sqrtl((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
+          std::sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
                      (rr[i * 6 + 1] - rr[j * 6 + 1]) *
                          (rr[i * 6 + 1] - rr[j * 6 + 1]) +
                      (rr[i * 6 + 2] - rr[j * 6 + 2]) *
@@ -226,7 +226,7 @@ int main() {
       for (int j = t + 1; j < masses.size(); j++) {
         p_energy +=
             masses[t] * masses[j] /
-            std::sqrtl((rr[t * 6] - rr[j * 6]) * (rr[t * 6] - rr[j * 6]) +
+            std::sqrt((rr[t * 6] - rr[j * 6]) * (rr[t * 6] - rr[j * 6]) +
                        (rr[t * 6 + 1] - rr[j * 6 + 1]) *
                            (rr[t * 6 + 1] - rr[j * 6 + 1]) +
                        (rr[t * 6 + 2] - rr[j * 6 + 2]) *
@@ -252,7 +252,7 @@ int main() {
     data_energy[i] = (abs((energy - init_energy) / init_energy));
 
     data_impulse_moment[i] =
-        std::sqrtl((impulse_moment[0] - init_impulse_moment[0]) *
+        std::sqrt((impulse_moment[0] - init_impulse_moment[0]) *
                        (impulse_moment[0] - init_impulse_moment[0]) +
                    (impulse_moment[1] - init_impulse_moment[1]) *
                        (impulse_moment[1] - init_impulse_moment[1]) +
@@ -262,7 +262,7 @@ int main() {
          init_impulse_moment[1] * init_impulse_moment[1] +
          init_impulse_moment[2] * init_impulse_moment[2]);
 
-    data_center[i] = std::sqrtl((init_center_mass[0] - center_mass[0]) *
+    data_center[i] = std::sqrt((init_center_mass[0] - center_mass[0]) *
                                     (init_center_mass[0] - center_mass[0]) +
                                 (init_center_mass[1] - center_mass[1]) *
                                     (init_center_mass[1] - center_mass[1]) +

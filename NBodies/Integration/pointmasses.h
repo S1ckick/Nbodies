@@ -67,7 +67,7 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
       Type _dx = x[6 * j] - x[6 * i], _dy = x[6 * j + 1] - x[6 * i + 1],
            _dz = x[6 * j + 2] - x[6 * i + 2];
       Type _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
-      Type _dist = std::sqrtl(_dist2);
+      Type _dist = std::sqrt(_dist2);
 
       Type _dist3 = _dist * _dist2;
 

@@ -6,10 +6,11 @@
 
 #include <vector>
 
+#include "abmd/abmd.h"
 #include "pointmasses.h"
 
 template <typename Type>
-void Euler(std::vector<Type> &x, std::vector<Type> masses, Type h) {
+void Euler(std::vector<Type> &x, const std::vector<Type> &masses, Type h) {
   ObjectsData<Type> *objects = new ObjectsData<Type>(masses);
   std::vector<Type> k_1;
   k_1.resize(x.size());
@@ -22,7 +23,7 @@ void Euler(std::vector<Type> &x, std::vector<Type> masses, Type h) {
 }
 
 template <typename Type>
-void RungeKutta4(std::vector<Type> &x, std::vector<Type> masses, Type h) {
+void RungeKutta4(std::vector<Type> &x, std::vector<Type> &masses, Type h) {
   ObjectsData<Type> *objects = new ObjectsData<Type>(masses);
   std::vector<Type> prev_x, new_x, k_1, k_2, k_3, k_4;
   prev_x.resize(x.size());
