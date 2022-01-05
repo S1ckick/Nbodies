@@ -6,11 +6,11 @@
 
 #include <vector>
 
-#include "abmd/abmd.h"
+//#include "abmd/abmd.h"
 #include "pointmasses.h"
 
 template <typename Type>
-void Euler(std::vector<Type> &x, const std::vector<Type> &masses, Type h) {
+void Euler(std::vector<Type> &x, std::vector<Type> &masses, Type h) {
   ObjectsData<Type> *objects = new ObjectsData<Type>(masses);
   std::vector<Type> k_1;
   k_1.resize(x.size());

@@ -19,7 +19,6 @@ using ABMD_RHSD = void (*)(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[], ABMD_DOUBL
 
 template <typename ABMD_DOUBLE>
 struct ABMD {
-
   ABMD_RHS<ABMD_DOUBLE> f1;
   ABMD_RHSD<ABMD_DOUBLE> f2;
   int dim;
@@ -43,6 +42,52 @@ struct ABMD {
   int dx_delays_len;
   char *error;
 };
+
+template <typename ABMD_DOUBLE>
+ABMD<ABMD_DOUBLE> *abmd_create(ABMD_RHS<ABMD_DOUBLE> f, int dim, double t0, double t1, double h, double *init) {
+  ABMD<ABMD_DOUBLE> *abm = (ABMD<ABMD_DOUBLE> *) malloc(sizeof(ABMD<ABMD_DOUBLE>));
+  double *final_state = (double *) malloc(sizeof(double) * dim);
+  char *error = (char *) malloc(256 * sizeof(char));
+  *abm = (ABMD<ABMD_DOUBLE>) {
+          .f1=f,
+          .f2=NULL,
+          .dim=dim,
+          .t0=t0,
+          .t1=t1,
+          .h=h,
+          .init=init,
+          .delays=NULL,
+          .ndelays=0,
+          .abm_order=ABMD_DEFAULT_ORDER,
+          .delays_poly_degree=ABMD_DEFAULT_ORDER,
+          .pointsave_poly_degree=ABMD_DEFAULT_ORDER,
+          .final_state=final_state,
+          .context=NULL,
+          .init_call=NULL,
+          .callback_t=NULL,
+          .callback=NULL,
+          .delayed_idxs=NULL,
+          .delayed_idxs_lens=NULL,
+          .dx_delays_idxs=NULL,
+          .dx_delays_len=0,
+          .error=error
+  };
+  return abm;
+}
+
+template <typename ABMD_DOUBLE>
+void abmd_destroy(ABMD<ABMD_DOUBLE> *abm) {
+  free(abm->delays);
+  free(abm->final_state);
+  for (int i = 0; i < abm->ndelays; i++) {
+    free(abm->delayed_idxs[i]);
+  }
+  free(abm->delayed_idxs);
+  free(abm->delayed_idxs_lens);
+  free(abm->dx_delays_idxs);
+  free(abm->error);
+  free(abm);
+}
 
 template <typename ABMD_DOUBLE>
 struct Queue {
@@ -370,78 +415,3 @@ struct Queue {
     }
   }
 };
-
-/*
-
-#include <assert.h>
-#include <stdio.h>
-
-int test() {
-  Queue* queue = create_queue(4, 2);
-  ABMD_DOUBLE *address;
-  address = push(queue);
-  address[0] = 10;
-  address[1] = 15;
-
-  assert(peek_left(queue) == peek_right_x(queue));
-  assert(peek_left(queue)[0] == 10);
-  assert(peek_left(queue)[1] == 15);
-
-  address = push(queue);
-  address[0] = 20;
-  address[1] = 25;
-
-  assert(peek_left(queue) != peek_right_x(queue));
-  assert(peek_left(queue)[0] == 10);
-  assert(peek_right_x(queue)[0] == 20);
-  assert(peek_right_x(queue)[1] == 25);
-
-  address = push(queue);
-  address[0] = 30;
-  address[1] = 35;
-  address = push(queue);
-  address[0] = 40;
-  address[1] = 45;
-
-  assert(pop(queue)[0] == 10);
-  assert(peek_left(queue)[1] == 25);
-  assert(peek_right_x(queue)[0] == 40);
-
-  assert(get_x(queue, 0)[0] == 20);
-  assert(get_x(queue, 1)[1] == 35);
-  assert(get_x(queue, 2)[0] == 40);
-
-  printf("Queue tests passed");
-  return 0;
-}
-
-int main_() {
-  int qsize = 3;
-  int dim = 2;
-  Queue *q = create_queue(qsize, dim * 2);
-  set_step(q, -1);
-  set_t0(q, 0);
-  ABMD_DOUBLE *one = push(q);
-  ABMD_DOUBLE *two = push(q);
-  ABMD_DOUBLE *three = push(q);
-  one[0] = 0;
-  one[1] = 16;
-  two[0] = 1;
-  two[1] = 9;
-  three[0] = 4;
-  three[1] = 4;
-
-  ABMD_DOUBLE *out = (ABMD_DOUBLE *) malloc(dim * sizeof(ABMD_DOUBLE));
-  evaluate_x_all(q, -1.5, out);
-  printf("%Le, %Le\n", out[0], out[1]);
-
-  pop(q);
-  ABMD_DOUBLE *next = push(q);
-  next[0] = 9;
-  next[1] = 1;
-  evaluate_x_all(q, -4, out);
-  printf("%Le, %Le\n", out[0], out[1]);
-  
-  return 0;
-}
-*/

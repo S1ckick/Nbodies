@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <string>
-
 #include "abmd_rk.h"
+//#include "../methods.h"
 
 template <typename ABMD_DOUBLE>
 ABMD_DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
@@ -205,7 +205,7 @@ void get_delayed_states(ABMData<ABMD_DOUBLE> *abm_data, double ti, int last_dx_k
 }
 
 template <typename ABMD_DOUBLE>
-void ABMD_run(std::vector<ABMD_DOUBLE> &x, std::vector<ABMD_DOUBLE> masses, ABMD_DOUBLE hh, const ABMD<ABMD_DOUBLE> &abm) {
+void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
   int abm_order = abm->abm_order;
 
   // if (!(1 <= abm_order && abm_order <= 19)) {
@@ -390,17 +390,77 @@ void ABMD_run(std::vector<ABMD_DOUBLE> &x, std::vector<ABMD_DOUBLE> masses, ABMD
   free(callback_state_l);
 }
 
-template <typename ABMD_DOUBLE>
-void ABMD_method(std::vector<ABMD_DOUBLE> &x, std::vector<ABMD_DOUBLE> masses, ABMD_DOUBLE h) {
-  ABMD<ABMD_DOUBLE> abm(NULL, dim, t0, t1, h, init);
-  abmd_set_f2(abm, f);
-  abmd_set_delays_poly_degree(abm, 8);
-  abmd_set_pointsave_poly_degree(abm, 8);
-  abmd_set_delays(abm, (double[]) {delay, delay}, 2);
-  abmd_set_callback(abm, callback_there, &callback_t);
-  abmd_set_context(abm, &abm_test);
-  abmd_set_delayed_ranges(abm, (int[]) {0, 1, 2, 3}, 4, 0);
-  abmd_set_delayed_ranges(abm, (int[]) {0, 4}, 2, 1);
-  abmd_set_dx_delays(abm, (int[]) {0, 1}, 2);
 
+
+template <typename ABMD_DOUBLE>
+void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x, std::vector<ABMD_DOUBLE> masses, ABMD_DOUBLE h) {
+  int order = 11;
+  double t0 = 0;
+  double t1 = 365;
+  //double h = 1 / 16.0;
+  double delay = 0.096;
+  int dim = 4;
+  double *init = malloc(dim * sizeof(double));
+  for (int i = 0; i < dim; i += 4) {
+    init[i] = -3844e5;
+    init[i + 1] = 0;
+    init[i + 2] = 0;
+    init[i + 3] = 1023 * 3600 * 24;
+  }
+
+
+  int n = (int)(1 + (t1 - t0) / h);
+  int sol_size = 2 * n - 1;
+//  int sol_size = n;
+  ABMD_DOUBLE *sol = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * sol_size * dim);
+  ABMD_DOUBLE *sol_back = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * sol_size * dim);
+  double callback_t = 0;
+
+  // ABMTest abm_test = (ABMTest){
+  //         .callback_t=&callback_t,
+  //         .i=0,
+  //         .dim=dim,
+  //         .sol=sol,
+  //         .sol_back=sol_back
+  // };
+  ObjectsData<ABMD_DOUBLE> *objects = new ObjectsData<ABMD_DOUBLE>(masses);
+  ABMD<ABMD_DOUBLE> *abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t0, t1, h, init);
+  // abmd_set_callback(abm, callback_there, &callback_t);
+  abm.context = objects; // add solutions
+
+  ABMD_run(abm);
+  // printf("Final: %e %e\n", abmd_get_final_state(abm)[0], abmd_get_final_state(abm)[2]);
+  abmd_destroy(abm);
+
+  ABMD_DOUBLE *sol_reversed = malloc(sizeof(ABMD_DOUBLE) * sol_size * dim);
+
+  for (int i = 0; i < sol_size; i++) {
+    memcpy(&sol_reversed[i * dim], &sol[(sol_size - i - 1) * dim], sizeof(ABMD_DOUBLE) * dim);
+    sol_reversed[i * dim + 1] *= -1;
+    sol_reversed[i * dim + 3] *= -1;
+  }
+
+  abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h, &sol[(sol_size - 1) * dim]);
+  //abmd_set_callback(abm, callback_back, &callback_t);
+  //abmd_set_context(abm, &abm_test);
+  // callback_t = t1;
+  // abm_test.i = 0;
+
+  ABMD_run(abm);
+  abmd_destroy(abm);
+  ABMD_DOUBLE *diff = malloc(sizeof(ABMD_DOUBLE) * sol_size * 2);
+
+  for (int i = 0; i < sol_size; i++) {
+    ABMD_DOUBLE x1 = sol_reversed[i * dim];
+    ABMD_DOUBLE x2 = sol_back[i * dim];
+    ABMD_DOUBLE y1 = sol_reversed[i * dim + 2];
+    ABMD_DOUBLE y2 = sol_back[i * dim + 2];
+    diff[i * 2] = t0 + i * h;
+    diff[i * 2 + 1] = (ABMD_DOUBLE) sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+  }
+
+  free(sol);
+  free(sol_reversed);
+  free(sol_back);
+  free(diff);
 }

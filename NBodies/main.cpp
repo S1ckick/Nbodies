@@ -184,6 +184,7 @@ int main() {
   auto start = std::chrono::high_resolution_clock::now();
 
   for (int i = 0; i < iterations; i++) {
+    
     RungeKutta4(rr, masses, h);
 
     for (int j = 0; j < masses.size(); j++) {
