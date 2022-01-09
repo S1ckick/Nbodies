@@ -6,8 +6,8 @@
 
 #include <vector>
 
-//#include "abmd/abmd.h"
-#include "pointmasses.h"
+#include "abmd/abmd.h"
+//#include "pointmasses.h"
 
 template <typename Type>
 void Euler(std::vector<Type> &x, std::vector<Type> &masses, Type h) {

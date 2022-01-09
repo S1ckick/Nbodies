@@ -199,11 +199,21 @@ void pointmassesCalculateXdot(std::vector<Type> &x, std::vector<Type> &f,
 }
 
 template <typename ABMD_DOUBLE>
+struct ContextData{
+  ObjectsData<ABMD_DOUBLE> *objects;
+  ABMD_DOUBLE *sol;
+  ABMD_DOUBLE *sol_back;
+  double *callback_t;
+  int i;
+  int dim;
+};
+
+template <typename ABMD_DOUBLE>
 void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, void *context) {
   int i, j, k;
   //userdata()
   // Copy velocities of bodies
-  ObjectsData<ABMD_DOUBLE> *userdata = (ObjectsData<ABMD_DOUBLE> *)context;
+  ObjectsData<ABMD_DOUBLE> *userdata = static_cast<ContextData<ABMD_DOUBLE> *>(context)->objetcs;
   for (i = 0; i < userdata->n_objects; i++) {
     f[6 * i] = x[6 * i + 3];
     f[6 * i + 1] = x[6 * i + 4];

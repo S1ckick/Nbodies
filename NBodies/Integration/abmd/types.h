@@ -35,7 +35,7 @@ struct ABMD {
   void *context;
   void(*init_call)(ABMD_DOUBLE[], void*);
   double *callback_t;
-  int(*callback)(double *t, double state[], void *context);
+  int(*callback)(double *t, ABMD_DOUBLE state[], void *context);
   int **delayed_idxs;
   int *delayed_idxs_lens;
   int *dx_delays_idxs;
@@ -44,7 +44,7 @@ struct ABMD {
 };
 
 template <typename ABMD_DOUBLE>
-ABMD<ABMD_DOUBLE> *abmd_create(ABMD_RHS<ABMD_DOUBLE> f, int dim, double t0, double t1, double h, double *init) {
+ABMD<ABMD_DOUBLE> *abmd_create(ABMD_RHS<ABMD_DOUBLE> f, int dim, double t0, double t1, double h, ABMD_DOUBLE *init) {
   ABMD<ABMD_DOUBLE> *abm = (ABMD<ABMD_DOUBLE> *) malloc(sizeof(ABMD<ABMD_DOUBLE>));
   double *final_state = (double *) malloc(sizeof(double) * dim);
   char *error = (char *) malloc(256 * sizeof(char));

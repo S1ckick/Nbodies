@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <string>
 #include "abmd_rk.h"
-//#include "../methods.h"
+#include "../pointmasses.h"
 
 template <typename ABMD_DOUBLE>
 ABMD_DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
@@ -390,7 +390,27 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
   free(callback_state_l);
 }
 
+template <typename ABMD_DOUBLE>
+int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
+  ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *) context;
+  int dim = abm_test->dim;
+  memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(ABMD_DOUBLE));
+  abm_test->i++;
+  t[0] += 1 / 32.0;
+//  t[0] += 1 / 16.0;
+  return 1;
+}
 
+template <typename ABMD_DOUBLE>
+int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
+  ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *) context;
+  int dim = abm_test->dim;
+  memcpy(&abm_test->sol_back[abm_test->i * dim], state, dim * sizeof(ABMD_DOUBLE));
+  abm_test->i++;
+  t[0] -= 1 / 32.0;
+//  t[0] -= 1 / 16.0;
+  return 1;
+}
 
 template <typename ABMD_DOUBLE>
 void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x, std::vector<ABMD_DOUBLE> masses, ABMD_DOUBLE h) {
@@ -398,16 +418,7 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x, std::vector<ABMD_DOUBLE> masses
   double t0 = 0;
   double t1 = 365;
   //double h = 1 / 16.0;
-  double delay = 0.096;
-  int dim = 4;
-  double *init = malloc(dim * sizeof(double));
-  for (int i = 0; i < dim; i += 4) {
-    init[i] = -3844e5;
-    init[i + 1] = 0;
-    init[i + 2] = 0;
-    init[i + 3] = 1023 * 3600 * 24;
-  }
-
+  int dim = 6 * masses.size();
 
   int n = (int)(1 + (t1 - t0) / h);
   int sol_size = 2 * n - 1;
@@ -416,17 +427,20 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x, std::vector<ABMD_DOUBLE> masses
   ABMD_DOUBLE *sol_back = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * sol_size * dim);
   double callback_t = 0;
 
-  // ABMTest abm_test = (ABMTest){
-  //         .callback_t=&callback_t,
-  //         .i=0,
-  //         .dim=dim,
-  //         .sol=sol,
-  //         .sol_back=sol_back
-  // };
   ObjectsData<ABMD_DOUBLE> *objects = new ObjectsData<ABMD_DOUBLE>(masses);
-  ABMD<ABMD_DOUBLE> *abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t0, t1, h, init);
-  // abmd_set_callback(abm, callback_there, &callback_t);
-  abm.context = objects; // add solutions
+  ContextData<ABMD_DOUBLE> abm_test = (ContextData<ABMD_DOUBLE>){
+          .objects=objects,
+          .callback_t=&callback_t,
+          .i=0,
+          .dim=dim,
+          .sol=sol,
+          .sol_back=sol_back
+  };
+  ABMD<ABMD_DOUBLE> *abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t0, t1, h, x.data());
+
+  abm->callback = callback_there;
+  abm->callback_t = &callback_t;
+  abm->context = &abm_test;
 
   ABMD_run(abm);
   // printf("Final: %e %e\n", abmd_get_final_state(abm)[0], abmd_get_final_state(abm)[2]);
@@ -441,10 +455,11 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x, std::vector<ABMD_DOUBLE> masses
   }
 
   abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h, &sol[(sol_size - 1) * dim]);
-  //abmd_set_callback(abm, callback_back, &callback_t);
-  //abmd_set_context(abm, &abm_test);
-  // callback_t = t1;
-  // abm_test.i = 0;
+  abm->callback = callback_back;
+  abm->callback_t = &callback_t;
+  abm->context = &abm_test;
+  callback_t = t1;
+  abm_test.i = 0;
 
   ABMD_run(abm);
   abmd_destroy(abm);
