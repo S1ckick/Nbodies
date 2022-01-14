@@ -1,3 +1,6 @@
+#ifndef ABMD_RK_H
+#define ABMD_RK_H
+
 #include <cstdlib>
 #include "types.h"
 
@@ -125,7 +128,7 @@ void rk4_step(ABMD_RHS<ABMD_DOUBLE> f, double h, double t, ABMD_DOUBLE *x, int d
 template <typename ABMD_DOUBLE>
 void dopri8_step(ABMD_RHS<ABMD_DOUBLE> f, double h, double t, ABMD_DOUBLE *x, int dim, void *context,
                  ABMD_DOUBLE *out, ABMD_DOUBLE *rhs_out, ABMD_DOUBLE **memory) {
-  coefs<ABMD_DOUBLE> cfs();
+  coefs<ABMD_DOUBLE> cfs;
                 
   if (*memory == NULL) {
     *memory = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * (11 * dim));
@@ -234,3 +237,4 @@ void rk_step(ABMD_RHS<ABMD_DOUBLE> f, double h, double t, ABMD_DOUBLE *state, in
     rk4_step(f, h, t, state, dim, context, out, rhs_out, memory);
   }
 }
+#endif //ABMD_RK_H

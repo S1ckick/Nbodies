@@ -1,3 +1,6 @@
+#ifndef TYPES_H
+#define TYPES_H
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -25,13 +28,13 @@ struct ABMD {
   double t0;
   double t1;
   double h;
-  double *init;
+  ABMD_DOUBLE *init;
   double *delays;
   int ndelays;
   int abm_order;
   int delays_poly_degree;
   int pointsave_poly_degree;
-  double *final_state;
+  ABMD_DOUBLE *final_state;
   void *context;
   void(*init_call)(ABMD_DOUBLE[], void*);
   double *callback_t;
@@ -46,7 +49,7 @@ struct ABMD {
 template <typename ABMD_DOUBLE>
 ABMD<ABMD_DOUBLE> *abmd_create(ABMD_RHS<ABMD_DOUBLE> f, int dim, double t0, double t1, double h, ABMD_DOUBLE *init) {
   ABMD<ABMD_DOUBLE> *abm = (ABMD<ABMD_DOUBLE> *) malloc(sizeof(ABMD<ABMD_DOUBLE>));
-  double *final_state = (double *) malloc(sizeof(double) * dim);
+  ABMD_DOUBLE *final_state = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * dim);
   char *error = (char *) malloc(256 * sizeof(char));
   *abm = (ABMD<ABMD_DOUBLE>) {
           .f1=f,
@@ -112,9 +115,9 @@ struct Queue {
     //Queue<ABMD_DOUBLE>* queue = (Queue<ABMD_DOUBLE> *) malloc(sizeof(Queue<ABMD_DOUBLE>));
     t0 = 0;
     h = 1;
-    capacity = capacity;
+    this->capacity = capacity;
     block_size = block_size;
-    dim = dim;
+    this->dim = dim;
     head = size = 0;
     tail = capacity - 1;
     _array = (ABMD_DOUBLE *) malloc(capacity * block_size * sizeof(ABMD_DOUBLE));
@@ -228,12 +231,12 @@ struct Queue {
     return -1;
   }
 
-  ABMD_DOUBLE* get_x(int block_idx) {
-    return xarray[(head + block_idx) % capacity];
+  static ABMD_DOUBLE* get_x(Queue<ABMD_DOUBLE> *q, int block_idx) {
+    return q->xarray[(q->head + block_idx) % q->capacity];
   }
 
-  ABMD_DOUBLE* get_dx(int block_idx) {
-    return dxarray[(head + block_idx) % capacity];
+  static ABMD_DOUBLE* get_dx(Queue<ABMD_DOUBLE> *q, int block_idx) {
+    return q->dxarray[(q->head + block_idx) % q->capacity];
   }
 
   void backup_last_x() {
@@ -246,12 +249,12 @@ struct Queue {
   }
 
   void _evaluate(double t, int *idxs, int idxs_len, int n_points,
-                double *ws, int last_known, ABMD_DOUBLE *(*get)(int),
+                double *ws, int last_known, ABMD_DOUBLE *(*get)(Queue<ABMD_DOUBLE> *, int),
                 ABMD_DOUBLE *out) {
 
     double t_idx = _get_t_index(t, last_known);
     if (t_idx != -1 && fmod(t_idx, 1) < 1e-13) {
-      ABMD_DOUBLE *x = get((int) round(t_idx));
+      ABMD_DOUBLE *x = get(this, (int) round(t_idx));
       if (idxs == NULL) {
         memcpy(out, x, idxs_len * sizeof(ABMD_DOUBLE));
         return;
@@ -282,7 +285,7 @@ struct Queue {
     for (int i = 0; i < n_points; i++)
     {
       coefs[i] /= denom;
-      xs[i] = get(i + left);
+      xs[i] = get(this, i + left);
     }
 
     if (idxs == NULL) {
@@ -415,3 +418,4 @@ struct Queue {
     }
   }
 };
+#endif //TYPES_H

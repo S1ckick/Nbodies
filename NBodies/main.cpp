@@ -10,6 +10,7 @@
 
 #include "Integration/methods.h"
 #include "Writer/writer.h"
+#include "Integration/abmd/abmd.h"
 
 #ifdef NUMBER_DOUBLE_DOUBLE
 #include <qd/dd_real.h>
@@ -182,6 +183,8 @@ int main() {
 
   std::vector<current_type> coefs = initDDCoef<current_type>();
   auto start = std::chrono::high_resolution_clock::now();
+
+  ABMD_calc_diff(rr, masses, h);
 
   for (int i = 0; i < iterations; i++) {
     
