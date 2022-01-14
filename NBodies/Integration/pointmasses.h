@@ -206,6 +206,7 @@ struct ContextData{
   double *callback_t;
   int i;
   int dim;
+  FILE *f;
 };
 
 template <typename ABMD_DOUBLE>

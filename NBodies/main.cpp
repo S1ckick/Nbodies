@@ -1,16 +1,18 @@
+#include <stdio.h>
+
 #include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <vector>
 
 #define NUMBER_DOUBLE 1
 //#define NUMBER_DOUBLE_DOUBLE 1
 
+#include "Integration/abmd/abmd.h"
 #include "Integration/methods.h"
 #include "Writer/writer.h"
-#include "Integration/abmd/abmd.h"
 
 #ifdef NUMBER_DOUBLE_DOUBLE
 #include <qd/dd_real.h>
@@ -18,13 +20,13 @@
 
 using current_type = dd_real;
 #else
-using current_type = long double;
+using current_type = double;
 #endif
 
 #include "Utils/helper.h"
 
 using namespace std;
-using current_type = long double;
+using current_type = double;
 
 void moonToGeocentric(std::vector<current_type> &rr,
                       std::vector<current_type> &res) {
@@ -62,14 +64,12 @@ int main() {
   unsigned int oldcw;
   fpu_fix_start(&oldcw);
 #endif
-
-  std::ifstream infile("../NBodies/points.txt");
+  std::ifstream infile("../points.txt");
   long double x, y, z, vx, vy, vz, m;
   std::vector<current_type> rr;
   rr.resize(6 * 16);
   std::vector<current_type> masses;
   masses.resize(16);
-
   std::string name;
   int k = 0;
   while (infile >> name >> m >> x >> y >> z >> vx >> vy >> vz) {
@@ -144,10 +144,10 @@ int main() {
       init_p_energy +=
           masses[i] * masses[j] /
           std::sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
-                     (rr[i * 6 + 1] - rr[j * 6 + 1]) *
-                         (rr[i * 6 + 1] - rr[j * 6 + 1]) +
-                     (rr[i * 6 + 2] - rr[j * 6 + 2]) *
-                         (rr[i * 6 + 2] - rr[j * 6 + 2]));
+                    (rr[i * 6 + 1] - rr[j * 6 + 1]) *
+                        (rr[i * 6 + 1] - rr[j * 6 + 1]) +
+                    (rr[i * 6 + 2] - rr[j * 6 + 2]) *
+                        (rr[i * 6 + 2] - rr[j * 6 + 2]));
     }
   }
   init_energy = init_k_energy - init_p_energy;
@@ -187,7 +187,6 @@ int main() {
   ABMD_calc_diff(rr, masses, h);
 
   for (int i = 0; i < iterations; i++) {
-    
     RungeKutta4(rr, masses, h);
 
     for (int j = 0; j < masses.size(); j++) {
@@ -231,10 +230,10 @@ int main() {
         p_energy +=
             masses[t] * masses[j] /
             std::sqrt((rr[t * 6] - rr[j * 6]) * (rr[t * 6] - rr[j * 6]) +
-                       (rr[t * 6 + 1] - rr[j * 6 + 1]) *
-                           (rr[t * 6 + 1] - rr[j * 6 + 1]) +
-                       (rr[t * 6 + 2] - rr[j * 6 + 2]) *
-                           (rr[t * 6 + 2] - rr[j * 6 + 2]));
+                      (rr[t * 6 + 1] - rr[j * 6 + 1]) *
+                          (rr[t * 6 + 1] - rr[j * 6 + 1]) +
+                      (rr[t * 6 + 2] - rr[j * 6 + 2]) *
+                          (rr[t * 6 + 2] - rr[j * 6 + 2]));
       }
     }
     energy = k_energy - p_energy;
@@ -257,21 +256,21 @@ int main() {
 
     data_impulse_moment[i] =
         std::sqrt((impulse_moment[0] - init_impulse_moment[0]) *
-                       (impulse_moment[0] - init_impulse_moment[0]) +
-                   (impulse_moment[1] - init_impulse_moment[1]) *
-                       (impulse_moment[1] - init_impulse_moment[1]) +
-                   (impulse_moment[2] - init_impulse_moment[2]) *
-                       (impulse_moment[2] - init_impulse_moment[2])) /
+                      (impulse_moment[0] - init_impulse_moment[0]) +
+                  (impulse_moment[1] - init_impulse_moment[1]) *
+                      (impulse_moment[1] - init_impulse_moment[1]) +
+                  (impulse_moment[2] - init_impulse_moment[2]) *
+                      (impulse_moment[2] - init_impulse_moment[2])) /
         (init_impulse_moment[0] * init_impulse_moment[0] +
          init_impulse_moment[1] * init_impulse_moment[1] +
          init_impulse_moment[2] * init_impulse_moment[2]);
 
     data_center[i] = std::sqrt((init_center_mass[0] - center_mass[0]) *
-                                    (init_center_mass[0] - center_mass[0]) +
-                                (init_center_mass[1] - center_mass[1]) *
-                                    (init_center_mass[1] - center_mass[1]) +
-                                (init_center_mass[2] - center_mass[2]) *
-                                    (init_center_mass[2] - center_mass[2]));
+                                   (init_center_mass[0] - center_mass[0]) +
+                               (init_center_mass[1] - center_mass[1]) *
+                                   (init_center_mass[1] - center_mass[1]) +
+                               (init_center_mass[2] - center_mass[2]) *
+                                   (init_center_mass[2] - center_mass[2]));
 
     rr[moonNum * 6] = moon_res_i[0];
     rr[moonNum * 6 + 1] = moon_res_i[1];

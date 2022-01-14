@@ -1,24 +1,23 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 #define ABMD_MAX_ORDER 19
 #define ABMD_DEFAULT_ORDER 11
 
-enum {
-  METHOD_DOPRI8 = 1,
-  METHOD_RK4 = 2
-};
+enum { METHOD_DOPRI8 = 1, METHOD_RK4 = 2 };
 
 template <typename ABMD_DOUBLE>
-using ABMD_RHS = void (*)(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *out, void *context);
+using ABMD_RHS = void (*)(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *out,
+                          void *context);
 
 template <typename ABMD_DOUBLE>
-using ABMD_RHSD = void (*)(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[], ABMD_DOUBLE dxs_delayed[],
-                    double t, ABMD_DOUBLE *out, void *context);
+using ABMD_RHSD = void (*)(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[],
+                           ABMD_DOUBLE dxs_delayed[], double t,
+                           ABMD_DOUBLE *out, void *context);
 
 template <typename ABMD_DOUBLE>
 struct ABMD {
@@ -36,9 +35,9 @@ struct ABMD {
   int pointsave_poly_degree;
   ABMD_DOUBLE *final_state;
   void *context;
-  void(*init_call)(ABMD_DOUBLE[], void*);
+  void (*init_call)(ABMD_DOUBLE[], void *);
   double *callback_t;
-  int(*callback)(double *t, ABMD_DOUBLE state[], void *context);
+  int (*callback)(double *t, ABMD_DOUBLE state[], void *context);
   int **delayed_idxs;
   int *delayed_idxs_lens;
   int *dx_delays_idxs;
@@ -47,34 +46,34 @@ struct ABMD {
 };
 
 template <typename ABMD_DOUBLE>
-ABMD<ABMD_DOUBLE> *abmd_create(ABMD_RHS<ABMD_DOUBLE> f, int dim, double t0, double t1, double h, ABMD_DOUBLE *init) {
-  ABMD<ABMD_DOUBLE> *abm = (ABMD<ABMD_DOUBLE> *) malloc(sizeof(ABMD<ABMD_DOUBLE>));
-  ABMD_DOUBLE *final_state = (ABMD_DOUBLE *) malloc(sizeof(ABMD_DOUBLE) * dim);
-  char *error = (char *) malloc(256 * sizeof(char));
-  *abm = (ABMD<ABMD_DOUBLE>) {
-          .f1=f,
-          .f2=NULL,
-          .dim=dim,
-          .t0=t0,
-          .t1=t1,
-          .h=h,
-          .init=init,
-          .delays=NULL,
-          .ndelays=0,
-          .abm_order=ABMD_DEFAULT_ORDER,
-          .delays_poly_degree=ABMD_DEFAULT_ORDER,
-          .pointsave_poly_degree=ABMD_DEFAULT_ORDER,
-          .final_state=final_state,
-          .context=NULL,
-          .init_call=NULL,
-          .callback_t=NULL,
-          .callback=NULL,
-          .delayed_idxs=NULL,
-          .delayed_idxs_lens=NULL,
-          .dx_delays_idxs=NULL,
-          .dx_delays_len=0,
-          .error=error
-  };
+ABMD<ABMD_DOUBLE> *abmd_create(ABMD_RHS<ABMD_DOUBLE> f, int dim, double t0,
+                               double t1, double h, ABMD_DOUBLE *init) {
+  ABMD<ABMD_DOUBLE> *abm =
+      (ABMD<ABMD_DOUBLE> *)malloc(sizeof(ABMD<ABMD_DOUBLE>));
+  ABMD_DOUBLE *final_state = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * dim);
+  char *error = (char *)malloc(256 * sizeof(char));
+  *abm = (ABMD<ABMD_DOUBLE>){.f1 = f,
+                             .f2 = NULL,
+                             .dim = dim,
+                             .t0 = t0,
+                             .t1 = t1,
+                             .h = h,
+                             .init = init,
+                             .delays = NULL,
+                             .ndelays = 0,
+                             .abm_order = ABMD_DEFAULT_ORDER,
+                             .delays_poly_degree = ABMD_DEFAULT_ORDER,
+                             .pointsave_poly_degree = ABMD_DEFAULT_ORDER,
+                             .final_state = final_state,
+                             .context = NULL,
+                             .init_call = NULL,
+                             .callback_t = NULL,
+                             .callback = NULL,
+                             .delayed_idxs = NULL,
+                             .delayed_idxs_lens = NULL,
+                             .dx_delays_idxs = NULL,
+                             .dx_delays_len = 0,
+                             .error = error};
   return abm;
 }
 
@@ -97,12 +96,12 @@ struct Queue {
   double t0, h;
   int head, tail, size, dim;
   int capacity, block_size;
-  ABMD_DOUBLE* _array;
+  ABMD_DOUBLE *_array;
   ABMD_DOUBLE **xarray, **dxarray;
   ABMD_DOUBLE *x_backup;
-  ABMD_DOUBLE* diffs_r;
-  ABMD_DOUBLE* diffs_w;
-  ABMD_DOUBLE* last_diff;
+  ABMD_DOUBLE *diffs_r;
+  ABMD_DOUBLE *diffs_w;
+  ABMD_DOUBLE *last_diff;
   int delays_poly_degree;
   int pointsave_poly_degree;
   double *lgr_delay_ws;
@@ -112,32 +111,33 @@ struct Queue {
 
   Queue(int capacity, int dim) {
     int block_size = 2 * dim;
-    //Queue<ABMD_DOUBLE>* queue = (Queue<ABMD_DOUBLE> *) malloc(sizeof(Queue<ABMD_DOUBLE>));
+    // Queue<ABMD_DOUBLE>* queue = (Queue<ABMD_DOUBLE> *)
+    // malloc(sizeof(Queue<ABMD_DOUBLE>));
     t0 = 0;
     h = 1;
     this->capacity = capacity;
-    block_size = block_size;
+    this->block_size = block_size;
     this->dim = dim;
     head = size = 0;
     tail = capacity - 1;
-    _array = (ABMD_DOUBLE *) malloc(capacity * block_size * sizeof(ABMD_DOUBLE));
-    xarray = (ABMD_DOUBLE **) malloc(capacity * sizeof(ABMD_DOUBLE *));
-    dxarray = (ABMD_DOUBLE **) malloc(capacity * sizeof(ABMD_DOUBLE *));
-    x_backup = (ABMD_DOUBLE *) malloc(dim * sizeof(ABMD_DOUBLE));
+    _array = (ABMD_DOUBLE *)malloc(capacity * block_size * sizeof(ABMD_DOUBLE));
+    xarray = (ABMD_DOUBLE **)malloc(capacity * sizeof(ABMD_DOUBLE *));
+    dxarray = (ABMD_DOUBLE **)malloc(capacity * sizeof(ABMD_DOUBLE *));
+    x_backup = (ABMD_DOUBLE *)malloc(dim * sizeof(ABMD_DOUBLE));
     for (int i = 0; i < capacity; i++) {
       xarray[i] = &this->_array[i * block_size];
       dxarray[i] = &this->_array[i * block_size + dim];
     }
 
-    diffs_r = (ABMD_DOUBLE *) malloc((capacity - 1) * dim * sizeof(ABMD_DOUBLE));
-    diffs_w = (ABMD_DOUBLE *) malloc((capacity - 1) * dim * sizeof(ABMD_DOUBLE));
-    last_diff = (ABMD_DOUBLE *) malloc(dim * sizeof(ABMD_DOUBLE));
+    diffs_r = (ABMD_DOUBLE *)malloc((capacity - 1) * dim * sizeof(ABMD_DOUBLE));
+    diffs_w = (ABMD_DOUBLE *)malloc((capacity - 1) * dim * sizeof(ABMD_DOUBLE));
+    last_diff = (ABMD_DOUBLE *)malloc(dim * sizeof(ABMD_DOUBLE));
     delays_poly_degree = capacity - 1;
     pointsave_poly_degree = capacity - 1;
-    lgr_delay_ws = (double *) malloc(capacity * sizeof(double));
-    lgr_delay_ws_nolast = (double *) malloc((capacity - 1) * sizeof(double));
-    lgr_pointsave_ws = (double *) malloc(capacity * sizeof(double));
-    lgr_nom = (ABMD_DOUBLE *) malloc(dim * sizeof(ABMD_DOUBLE));
+    lgr_delay_ws = (double *)malloc(capacity * sizeof(double));
+    lgr_delay_ws_nolast = (double *)malloc((capacity - 1) * sizeof(double));
+    lgr_pointsave_ws = (double *)malloc(capacity * sizeof(double));
+    lgr_nom = (ABMD_DOUBLE *)malloc(dim * sizeof(ABMD_DOUBLE));
   }
 
   ~Queue() {
@@ -154,13 +154,9 @@ struct Queue {
     free(lgr_nom);
   }
 
-  int is_full() {
-    return size == capacity;
-  }
+  int is_full() { return size == capacity; }
 
-  int is_empty() {
-    return size == 0;
-  }
+  int is_empty() { return size == 0; }
 
   // int get_capacity() {
   //   return capacity;
@@ -180,8 +176,8 @@ struct Queue {
 
   double _compute_wj(int j, int len) {
     /*
-    * Computes j-th barycentric Lagrange weight (eq. 3.2)
-    */
+     * Computes j-th barycentric Lagrange weight (eq. 3.2)
+     */
     double w = 1;
     double h = this->h;
     for (int k = 0; k < len; k++) {
@@ -231,30 +227,27 @@ struct Queue {
     return -1;
   }
 
-  static ABMD_DOUBLE* get_x(Queue<ABMD_DOUBLE> *q, int block_idx) {
+  static ABMD_DOUBLE *get_x(Queue<ABMD_DOUBLE> *q, int block_idx) {
     return q->xarray[(q->head + block_idx) % q->capacity];
   }
 
-  static ABMD_DOUBLE* get_dx(Queue<ABMD_DOUBLE> *q, int block_idx) {
+  static ABMD_DOUBLE *get_dx(Queue<ABMD_DOUBLE> *q, int block_idx) {
     return q->dxarray[(q->head + block_idx) % q->capacity];
   }
 
-  void backup_last_x() {
-    xarray[tail] = x_backup;
-  }
+  void backup_last_x() { xarray[tail] = x_backup; }
 
   void restore_last_x() {
     int i = (tail * block_size) % (capacity * block_size);
     xarray[tail] = &_array[i];
   }
 
-  void _evaluate(double t, int *idxs, int idxs_len, int n_points,
-                double *ws, int last_known, ABMD_DOUBLE *(*get)(Queue<ABMD_DOUBLE> *, int),
-                ABMD_DOUBLE *out) {
-
+  void _evaluate(double t, int *idxs, int idxs_len, int n_points, double *ws,
+                 int last_known, ABMD_DOUBLE *(*get)(Queue<ABMD_DOUBLE> *, int),
+                 ABMD_DOUBLE *out) {
     double t_idx = _get_t_index(t, last_known);
     if (t_idx != -1 && fmod(t_idx, 1) < 1e-13) {
-      ABMD_DOUBLE *x = get(this, (int) round(t_idx));
+      ABMD_DOUBLE *x = get(this, (int)round(t_idx));
       if (idxs == NULL) {
         memcpy(out, x, idxs_len * sizeof(ABMD_DOUBLE));
         return;
@@ -270,20 +263,19 @@ struct Queue {
       left -= 1;
     }
     if (t_idx != -1 && t_idx < left) {
-      left = (int) t_idx;
+      left = (int)t_idx;
     }
 
     ABMD_DOUBLE denom = 0;
     ABMD_DOUBLE coefs[ABMD_MAX_ORDER + 1];
     ABMD_DOUBLE *xs[ABMD_MAX_ORDER + 1];
-    
+
     for (int i = 0; i < n_points; i++) {
       double tti = t - (t0 + (i + left) * h);
       coefs[i] = ws[i] / tti;
       denom += coefs[i];
     }
-    for (int i = 0; i < n_points; i++)
-    {
+    for (int i = 0; i < n_points; i++) {
       coefs[i] /= denom;
       xs[i] = get(this, i + left);
     }
@@ -308,17 +300,17 @@ struct Queue {
   }
 
   void evaluate_x_all(double t, ABMD_DOUBLE *out) {
-    _evaluate(t, NULL, dim, pointsave_poly_degree + 1,
-              lgr_pointsave_ws, 1, get_x, out);
+    _evaluate(t, NULL, dim, pointsave_poly_degree + 1, lgr_pointsave_ws, 1,
+              get_x, out);
   }
 
   void evaluate_x_idxs(double t, int *idxs, int idxs_len, ABMD_DOUBLE *out) {
-    _evaluate(t, idxs, idxs_len, delays_poly_degree + 1,
-              lgr_delay_ws, 1, get_x, out);
+    _evaluate(t, idxs, idxs_len, delays_poly_degree + 1, lgr_delay_ws, 1, get_x,
+              out);
   }
 
-  void evaluate_dx(double t, int *idxs, int idxs_len,
-                  int last_known, ABMD_DOUBLE *out) {
+  void evaluate_dx(double t, int *idxs, int idxs_len, int last_known,
+                   ABMD_DOUBLE *out) {
     int deg = delays_poly_degree;
     double *ws = lgr_delay_ws;
     int n_points = deg + 1;
@@ -329,17 +321,15 @@ struct Queue {
     _evaluate(t, idxs, idxs_len, n_points, ws, last_known, get_dx, out);
   }
 
-  ABMD_DOUBLE* push() {
-    if (is_full())
-      return NULL;
+  ABMD_DOUBLE *push() {
+    if (is_full()) return NULL;
     tail = (tail + 1) % capacity;
     size += 1;
     return xarray[tail];
   }
 
-  ABMD_DOUBLE* pop() {
-    if (is_empty())
-      return NULL;
+  ABMD_DOUBLE *pop() {
+    if (is_empty()) return NULL;
     ABMD_DOUBLE *address = xarray[head];
     head = (head + 1) % capacity;
     size -= 1;
@@ -347,35 +337,26 @@ struct Queue {
     return address;
   }
 
-  ABMD_DOUBLE* peek_left() {
-    if (is_empty())
-      return NULL;
+  ABMD_DOUBLE *peek_left() {
+    if (is_empty()) return NULL;
     return xarray[head];
   }
 
-  ABMD_DOUBLE* peek_right_x() {
-    if (is_empty())
-      return NULL;
+  ABMD_DOUBLE *peek_right_x() {
+    if (is_empty()) return NULL;
     return xarray[tail];
   }
 
-  ABMD_DOUBLE* peek_right_dx() {
-    if (is_empty())
-      return NULL;
+  ABMD_DOUBLE *peek_right_dx() {
+    if (is_empty()) return NULL;
     return dxarray[tail];
   }
 
-  ABMD_DOUBLE* get_diffs_r() {
-    return diffs_r;
-  }
+  ABMD_DOUBLE *get_diffs_r() { return diffs_r; }
 
-  ABMD_DOUBLE* get_diffs_w() {
-    return diffs_w;
-  }
+  ABMD_DOUBLE *get_diffs_w() { return diffs_w; }
 
-  ABMD_DOUBLE* get_last_diff() {
-    return last_diff;
-  }
+  ABMD_DOUBLE *get_last_diff() { return last_diff; }
 
   void swap_diffs() {
     ABMD_DOUBLE *diffs_r = this->diffs_r;
@@ -406,7 +387,7 @@ struct Queue {
       return;
     }
 
-    ABMD_DOUBLE *last_diff = last_diff;
+    ABMD_DOUBLE *last_diff_1 = last_diff;
 
     for (int i = 0; i < dim; i++) {
       ABMD_DOUBLE new_d = *right++;
@@ -414,8 +395,8 @@ struct Queue {
         *diffs_w++ = new_d;
         new_d -= *diffs_r++;
       }
-      *last_diff++ = new_d;
+      *last_diff_1++ = new_d;
     }
   }
 };
-#endif //TYPES_H
+#endif  // TYPES_H
