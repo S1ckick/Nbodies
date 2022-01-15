@@ -64,7 +64,7 @@ int main() {
   unsigned int oldcw;
   fpu_fix_start(&oldcw);
 #endif
-  std::ifstream infile("../points.txt");
+  std::ifstream infile("../NBodies/points.txt");
   long double x, y, z, vx, vy, vz, m;
   std::vector<current_type> rr;
   rr.resize(6 * 16);

@@ -410,6 +410,7 @@ template <typename ABMD_DOUBLE>
 int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
   int dim = abm_test->dim;
+  memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(ABMD_DOUBLE));
   for (int i = 0; i < dim; i++) {
     fprintf(abm_test->f, " %.16le", state[i]);
   }
@@ -422,6 +423,8 @@ template <typename ABMD_DOUBLE>
 int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
   int dim = abm_test->dim;
+  memcpy(&abm_test->sol_back[abm_test->i * dim], state,
+         dim * sizeof(ABMD_DOUBLE));
   for (int i = 0; i < dim; i++) {
     fprintf(abm_test->fb, " %.16le", state[i]);
   }
@@ -491,7 +494,6 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_run(abm);
   abmd_destroy(abm);
 
-  
   ABMD_DOUBLE *diff = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 2);
 
   for (int i = 0; i < sol_size; i++) {
