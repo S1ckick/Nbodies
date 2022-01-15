@@ -483,8 +483,7 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
     sol_reversed[i * dim + 3] *= -1;
   }
 
-  abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h,
-                    &sol[(sol_size - 1) * dim]);
+  abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h, sol);
   abm->callback = callback_back;
   abm->callback_t = &callback_t;
   abm->context = &abm_test;
