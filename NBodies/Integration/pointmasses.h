@@ -207,6 +207,7 @@ struct ContextData{
   int i;
   int dim;
   FILE *f;
+  FILE *fb;
 };
 
 template <typename ABMD_DOUBLE>

@@ -410,7 +410,6 @@ template <typename ABMD_DOUBLE>
 int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
   int dim = abm_test->dim;
-  fprintf(abm_test->f, "%lf ", *t);
   for (int i = 0; i < dim; i++) {
     fprintf(abm_test->f, " %.16le", state[i]);
   }
@@ -423,9 +422,10 @@ template <typename ABMD_DOUBLE>
 int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
   int dim = abm_test->dim;
-  memcpy(&abm_test->sol_back[abm_test->i * dim], state,
-         dim * sizeof(ABMD_DOUBLE));
-  abm_test->i++;
+  for (int i = 0; i < dim; i++) {
+    fprintf(abm_test->fb, " %.16le", state[i]);
+  }
+  fprintf(abm_test->fb, "\n");
   t[0] -= 1 / 32.0;
   //  t[0] -= 1 / 16.0;
   return 1;
@@ -456,7 +456,8 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
                                     .callback_t = &callback_t,
                                     .i = 0,
                                     .dim = dim,
-                                    .f = fopen("res_out.txt", "wt")};
+                                    .f = fopen("res_out.txt", "wt"),
+                                    .fb = fopen("res_b_out.txt", "wt")};
   ABMD<ABMD_DOUBLE> *abm =
       abmd_create(pointmassesCalculateXdot_tmp, dim, t0, t1, h, x.data());
 
@@ -479,34 +480,34 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
     sol_reversed[i * dim + 3] *= -1;
   }
 
-  /*
-    abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h,
-                      &sol[(sol_size - 1) * dim]);
-    abm->callback = callback_back;
-    abm->callback_t = &callback_t;
-    abm->context = &abm_test;
-    callback_t = t1;
-    abm_test.i = 0;
+  abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h,
+                    &sol[(sol_size - 1) * dim]);
+  abm->callback = callback_back;
+  abm->callback_t = &callback_t;
+  abm->context = &abm_test;
+  callback_t = t1;
+  abm_test.i = 0;
 
-    ABMD_run(abm);
-    abmd_destroy(abm);
-    ABMD_DOUBLE *diff = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size *
-    2);
+  ABMD_run(abm);
+  abmd_destroy(abm);
 
-    for (int i = 0; i < sol_size; i++) {
-      ABMD_DOUBLE x1 = sol_reversed[i * dim];
-      ABMD_DOUBLE x2 = sol_back[i * dim];
+  
+  ABMD_DOUBLE *diff = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 2);
 
-      ABMD_DOUBLE y1 = sol_reversed[i * dim + 2];
-      ABMD_DOUBLE y2 = sol_back[i * dim + 2];
-      diff[i * 2] = t0 + i * h;
-      diff[i * 2 + 1] = (ABMD_DOUBLE)sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
-    }
-  */
+  for (int i = 0; i < sol_size; i++) {
+    ABMD_DOUBLE x1 = sol_reversed[i * dim];
+    ABMD_DOUBLE x2 = sol_back[i * dim];
+
+    ABMD_DOUBLE y1 = sol_reversed[i * dim + 2];
+    ABMD_DOUBLE y2 = sol_back[i * dim + 2];
+    diff[i * 2] = t0 + i * h;
+    diff[i * 2 + 1] = (ABMD_DOUBLE)sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+  }
+
   free(sol);
   free(sol_reversed);
-  // free(sol_back);
-  // free(diff);
+  free(sol_back);
+  free(diff);
 }
 
 #endif  // ABMD_H
