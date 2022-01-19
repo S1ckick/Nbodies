@@ -170,130 +170,124 @@ int main() {
   rr[moonNum * 6 + 4] = moon_res[4];
   rr[moonNum * 6 + 5] = moon_res[5];
 
-  std::vector<current_type> data_bodies, data_energy, data_impulse_moment,
-      data_center;
-
   current_type h(0.0625);
-  int iterations = 5000;
-
-  data_bodies.resize(masses.size() * iterations * 3);
-  data_energy.resize(iterations);
-  data_impulse_moment.resize(iterations);
-  data_center.resize(iterations);
-
-  std::vector<current_type> coefs = initDDCoef<current_type>();
   auto start = std::chrono::high_resolution_clock::now();
+  double t = 365;
+  int sol_size = 2 * (int)(1 + t / h) - 1;
+  current_type *sol = (current_type *)malloc(sizeof(current_type) * sol_size *
+                                             6 * masses.size());
+  current_type *sol_back = (current_type *)malloc(sizeof(current_type) *
+                                                  sol_size * 6 * masses.size());
+  current_type *diff =
+      (current_type *)malloc(sizeof(current_type) * sol_size * 2);
 
-  ABMD_calc_diff(rr, masses, h);
+  ABMD_calc_diff(rr, masses, h, t, sol, sol_back, diff);
 
-  for (int i = 0; i < iterations; i++) {
-    RungeKutta4(rr, masses, h);
-
-    for (int j = 0; j < masses.size(); j++) {
-      data_bodies[3 * (j + masses.size() * i)] = rr[j * 6];
-      data_bodies[1 + 3 * (j + masses.size() * i)] = rr[j * 6 + 1];
-      data_bodies[2 + 3 * (j + masses.size() * i)] = rr[j * 6 + 2];
-    }
-
-    /// for energy fix need change moon center
-    std::vector<current_type> moon_res_i(6, 0);
-    moonToGeocentric(rr, moon_res_i);
-
-    //------------center mass-------------
-
-    std::vector<current_type> center_mass(3, 0);
-
-    for (int t = 0; t < masses.size(); t++) {
-      center_mass[0] += rr[t * 6] * masses[t];
-      center_mass[1] += rr[t * 6 + 1] * masses[t];
-      center_mass[2] += rr[t * 6 + 2] * masses[t];
-    }
-
-    center_mass[0] /= total_mass;
-    center_mass[1] /= total_mass;
-    center_mass[2] /= total_mass;
-    //----------END center mass-------------
-
-    //--------------energy-------------------
-    current_type energy = 0;
-    current_type k_energy = 0;
-    for (int t = 0; t < masses.size(); t++) {
-      k_energy +=
-          masses[t] *
-          (rr[t * 6 + 3] * rr[t * 6 + 3] + rr[t * 6 + 4] * rr[t * 6 + 4] +
-           rr[t * 6 + 5] * rr[t * 6 + 5]) /
-          2.0;
-    }
-    current_type p_energy = 0;
-    for (int t = 0; t < masses.size(); t++) {
-      for (int j = t + 1; j < masses.size(); j++) {
-        p_energy +=
-            masses[t] * masses[j] /
-            std::sqrt((rr[t * 6] - rr[j * 6]) * (rr[t * 6] - rr[j * 6]) +
-                      (rr[t * 6 + 1] - rr[j * 6 + 1]) *
-                          (rr[t * 6 + 1] - rr[j * 6 + 1]) +
-                      (rr[t * 6 + 2] - rr[j * 6 + 2]) *
-                          (rr[t * 6 + 2] - rr[j * 6 + 2]));
-      }
-    }
-    energy = k_energy - p_energy;
-    //--------END energy---------------------
-
-    //-----------impulse moment---------------
-    std::vector<current_type> impulse_moment(3, 0);
-    for (int t = 0; t < masses.size(); t++) {
-      current_type temp_x = rr[t * 6 + 3] * masses[t];
-      current_type temp_y = rr[t * 6 + 4] * masses[t];
-      current_type temp_z = rr[t * 6 + 5] * masses[t];
-
-      impulse_moment[0] += rr[t * 6 + 1] * temp_z - rr[t * 6 + 2] * temp_y;
-      impulse_moment[1] += rr[t * 6 + 2] * temp_x - rr[t * 6] * temp_z;
-      impulse_moment[2] += rr[t * 6] * temp_y - rr[t * 6 + 1] * temp_x;
-    }
-    //--------------END impulse moment-----------
-
-    data_energy[i] = (abs((energy - init_energy) / init_energy));
-
-    data_impulse_moment[i] =
-        std::sqrt((impulse_moment[0] - init_impulse_moment[0]) *
-                      (impulse_moment[0] - init_impulse_moment[0]) +
-                  (impulse_moment[1] - init_impulse_moment[1]) *
-                      (impulse_moment[1] - init_impulse_moment[1]) +
-                  (impulse_moment[2] - init_impulse_moment[2]) *
-                      (impulse_moment[2] - init_impulse_moment[2])) /
-        (init_impulse_moment[0] * init_impulse_moment[0] +
-         init_impulse_moment[1] * init_impulse_moment[1] +
-         init_impulse_moment[2] * init_impulse_moment[2]);
-
-    data_center[i] = std::sqrt((init_center_mass[0] - center_mass[0]) *
-                                   (init_center_mass[0] - center_mass[0]) +
-                               (init_center_mass[1] - center_mass[1]) *
-                                   (init_center_mass[1] - center_mass[1]) +
-                               (init_center_mass[2] - center_mass[2]) *
-                                   (init_center_mass[2] - center_mass[2]));
-
-    rr[moonNum * 6] = moon_res_i[0];
-    rr[moonNum * 6 + 1] = moon_res_i[1];
-    rr[moonNum * 6 + 2] = moon_res_i[2];
-    rr[moonNum * 6 + 3] = moon_res_i[3];
-    rr[moonNum * 6 + 4] = moon_res_i[4];
-    rr[moonNum * 6 + 5] = moon_res_i[5];
+  for (int i = 0; i < sol_size; i++) {
+    current_type x = sol_back[i * 6 * masses.size()];
+    current_type y = sol_back[i * 6 * masses.size() + 2];
+    current_type z = sol_back[i * 6 * masses.size() + 4];
+    
   }
+  /*
+    for (int i = 0; i < iterations; i++) {
+      RungeKutta4(rr, masses, h);
+
+      for (int j = 0; j < masses.size(); j++) {
+        data_bodies[3 * (j + masses.size() * i)] = rr[j * 6];
+        data_bodies[1 + 3 * (j + masses.size() * i)] = rr[j * 6 + 1];
+        data_bodies[2 + 3 * (j + masses.size() * i)] = rr[j * 6 + 2];
+      }
+
+      /// for energy fix need change moon center
+      std::vector<current_type> moon_res_i(6, 0);
+      moonToGeocentric(rr, moon_res_i);
+
+      //------------center mass-------------
+
+      std::vector<current_type> center_mass(3, 0);
+
+      for (int t = 0; t < masses.size(); t++) {
+        center_mass[0] += rr[t * 6] * masses[t];
+        center_mass[1] += rr[t * 6 + 1] * masses[t];
+        center_mass[2] += rr[t * 6 + 2] * masses[t];
+      }
+
+      center_mass[0] /= total_mass;
+      center_mass[1] /= total_mass;
+      center_mass[2] /= total_mass;
+      //----------END center mass-------------
+
+      //--------------energy-------------------
+      current_type energy = 0;
+      current_type k_energy = 0;
+      for (int t = 0; t < masses.size(); t++) {
+        k_energy +=
+            masses[t] *
+            (rr[t * 6 + 3] * rr[t * 6 + 3] + rr[t * 6 + 4] * rr[t * 6 + 4] +
+             rr[t * 6 + 5] * rr[t * 6 + 5]) /
+            2.0;
+      }
+      current_type p_energy = 0;
+      for (int t = 0; t < masses.size(); t++) {
+        for (int j = t + 1; j < masses.size(); j++) {
+          p_energy +=
+              masses[t] * masses[j] /
+              std::sqrt((rr[t * 6] - rr[j * 6]) * (rr[t * 6] - rr[j * 6]) +
+                        (rr[t * 6 + 1] - rr[j * 6 + 1]) *
+                            (rr[t * 6 + 1] - rr[j * 6 + 1]) +
+                        (rr[t * 6 + 2] - rr[j * 6 + 2]) *
+                            (rr[t * 6 + 2] - rr[j * 6 + 2]));
+        }
+      }
+      energy = k_energy - p_energy;
+      //--------END energy---------------------
+
+      //-----------impulse moment---------------
+      std::vector<current_type> impulse_moment(3, 0);
+      for (int t = 0; t < masses.size(); t++) {
+        current_type temp_x = rr[t * 6 + 3] * masses[t];
+        current_type temp_y = rr[t * 6 + 4] * masses[t];
+        current_type temp_z = rr[t * 6 + 5] * masses[t];
+
+        impulse_moment[0] += rr[t * 6 + 1] * temp_z - rr[t * 6 + 2] * temp_y;
+        impulse_moment[1] += rr[t * 6 + 2] * temp_x - rr[t * 6] * temp_z;
+        impulse_moment[2] += rr[t * 6] * temp_y - rr[t * 6 + 1] * temp_x;
+      }
+      //--------------END impulse moment-----------
+
+      data_energy[i] = (abs((energy - init_energy) / init_energy));
+
+      data_impulse_moment[i] =
+          std::sqrt((impulse_moment[0] - init_impulse_moment[0]) *
+                        (impulse_moment[0] - init_impulse_moment[0]) +
+                    (impulse_moment[1] - init_impulse_moment[1]) *
+                        (impulse_moment[1] - init_impulse_moment[1]) +
+                    (impulse_moment[2] - init_impulse_moment[2]) *
+                        (impulse_moment[2] - init_impulse_moment[2])) /
+          (init_impulse_moment[0] * init_impulse_moment[0] +
+           init_impulse_moment[1] * init_impulse_moment[1] +
+           init_impulse_moment[2] * init_impulse_moment[2]);
+
+      data_center[i] = std::sqrt((init_center_mass[0] - center_mass[0]) *
+                                     (init_center_mass[0] - center_mass[0]) +
+                                 (init_center_mass[1] - center_mass[1]) *
+                                     (init_center_mass[1] - center_mass[1]) +
+                                 (init_center_mass[2] - center_mass[2]) *
+                                     (init_center_mass[2] - center_mass[2]));
+
+      rr[moonNum * 6] = moon_res_i[0];
+      rr[moonNum * 6 + 1] = moon_res_i[1];
+      rr[moonNum * 6 + 2] = moon_res_i[2];
+      rr[moonNum * 6 + 3] = moon_res_i[3];
+      rr[moonNum * 6 + 4] = moon_res_i[4];
+      rr[moonNum * 6 + 5] = moon_res_i[5];
+    }
+    */
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration =
       std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
   std::cout << "time: " << duration.count() << " microseconds \n";
-
-  json xyz_data;
-  xyz_data["coords"] = data_bodies;
-  xyz_data["iter"] = iterations;
-  xyz_data["num"] = masses.size();
-
-  writer<current_type> w;
-  w.writeRes("log.json", data_energy);
-  w.writeRes("bodies.json", xyz_data);
-  w.writeRes("moment.json", data_impulse_moment);
-  w.writeRes("center.json", data_center);
 
 #ifdef NUMBER_DOUBLE_DOUBLE
   fpu_fix_end(&oldcw);

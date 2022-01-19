@@ -414,6 +414,7 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
   for (int i = 0; i < dim; i++) {
     fprintf(abm_test->f, " %.16le", state[i]);
   }
+  abm_test->i++;
   fprintf(abm_test->f, "\n");
   t[0] += 1 / 32.0;
   return 1;
@@ -428,6 +429,7 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
   for (int i = 0; i < dim; i++) {
     fprintf(abm_test->fb, " %.16le", state[i]);
   }
+  abm_test->i++;
   fprintf(abm_test->fb, "\n");
   t[0] -= 1 / 32.0;
   //  t[0] -= 1 / 16.0;
@@ -436,20 +438,15 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
 
 template <typename ABMD_DOUBLE>
 void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
-                    std::vector<ABMD_DOUBLE> masses, ABMD_DOUBLE h) {
+                    std::vector<ABMD_DOUBLE> masses, ABMD_DOUBLE h, double t1, ABMD_DOUBLE *sol, ABMD_DOUBLE *sol_back, ABMD_DOUBLE *diff) {
   int order = 11;
   double t0 = 0;
-  double t1 = 365;
   // double h = 1 / 16.0;
   int dim = 6 * masses.size();
 
   int n = (int)(1 + (t1 - t0) / h);
   int sol_size = 2 * n - 1;
   //  int sol_size = n;
-  ABMD_DOUBLE *sol =
-      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * dim);
-  ABMD_DOUBLE *sol_back =
-      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * dim);
   double callback_t = 0;
 
   ObjectsData<ABMD_DOUBLE> *objects = new ObjectsData<ABMD_DOUBLE>(masses);
@@ -483,7 +480,8 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
     sol_reversed[i * dim + 3] *= -1;
   }
 
-  abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h, sol);
+  abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h,
+                    &sol[(sol_size - 1) * dim]);
   abm->callback = callback_back;
   abm->callback_t = &callback_t;
   abm->context = &abm_test;
@@ -493,16 +491,17 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_run(abm);
   abmd_destroy(abm);
 
-  ABMD_DOUBLE *diff = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 2);
-
   for (int i = 0; i < sol_size; i++) {
     ABMD_DOUBLE x1 = sol_reversed[i * dim];
     ABMD_DOUBLE x2 = sol_back[i * dim];
 
     ABMD_DOUBLE y1 = sol_reversed[i * dim + 2];
     ABMD_DOUBLE y2 = sol_back[i * dim + 2];
+
+    ABMD_DOUBLE z1 = sol_reversed[i * dim + 4];
+    ABMD_DOUBLE z2 = sol_back[i * dim + 4];
     diff[i * 2] = t0 + i * h;
-    diff[i * 2 + 1] = (ABMD_DOUBLE)sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+    diff[i * 2 + 1] = (ABMD_DOUBLE)sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
   }
 
   free(sol);
