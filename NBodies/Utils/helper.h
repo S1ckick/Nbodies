@@ -59,7 +59,7 @@ void append_expn(std::string &str, int expn) {
 
     str += '0' + expn;
 }
-
+#if 0
 string dd_real::to_string(int precision, int width, ios_base::fmtflags fmt,
                           bool showpos, bool uppercase, char fill) const {
     string s;
@@ -216,7 +216,7 @@ string dd_real::to_string(int precision, int width, ios_base::fmtflags fmt,
 
     return s;
 }
-
+#endif
 /* Reads in a double-double number from the string s. */
 void read(const char *s, dd_real &a) {
     const char *p = s;

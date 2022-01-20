@@ -23,41 +23,10 @@ using current_type = dd_real;
 using current_type = double;
 #endif
 
-#include "Utils/helper.h"
+//#include "Utils/helper.h"
 
 using namespace std;
-using current_type = double;
-
-void moonToGeocentric(std::vector<current_type> &rr,
-                      std::vector<current_type> &res) {
-  current_type earth_x = rr[earthNum * 6];
-  current_type earth_y = rr[earthNum * 6 + 1];
-  current_type earth_z = rr[earthNum * 6 + 2];
-  current_type earth_vx = rr[earthNum * 6 + 3];
-  current_type earth_vy = rr[earthNum * 6 + 4];
-  current_type earth_vz = rr[earthNum * 6 + 5];
-
-  current_type gcmoon_x = rr[moonNum * 6];
-  current_type gcmoon_y = rr[moonNum * 6 + 1];
-  current_type gcmoon_z = rr[moonNum * 6 + 2];
-  current_type gcmoon_vx = rr[moonNum * 6 + 3];
-  current_type gcmoon_vy = rr[moonNum * 6 + 4];
-  current_type gcmoon_vz = rr[moonNum * 6 + 5];
-
-  rr[moonNum * 6] = earth_x + gcmoon_x;
-  rr[moonNum * 6 + 1] = earth_y + gcmoon_y;
-  rr[moonNum * 6 + 2] = earth_z + gcmoon_z;
-  rr[moonNum * 6 + 3] = earth_vx + gcmoon_vx;
-  rr[moonNum * 6 + 4] = earth_vy + gcmoon_vy;
-  rr[moonNum * 6 + 5] = earth_vz + gcmoon_vz;
-
-  res[0] = gcmoon_x;
-  res[1] = gcmoon_y;
-  res[2] = gcmoon_z;
-  res[3] = gcmoon_vx;
-  res[4] = gcmoon_vy;
-  res[5] = gcmoon_vz;
-}
+//using current_type = double;
 
 int main() {
 #ifdef NUMBER_DOUBLE_DOUBLE
@@ -89,7 +58,7 @@ int main() {
 
   /// for energy fix need change moon center
   std::vector<current_type> moon_res(6, 0);
-  moonToGeocentric(rr, moon_res);
+  moonToGeocentric(rr.data(), moon_res.data());
 
   current_type total_mass = 0;
   for (int i = 0; i < masses.size(); i++) {
@@ -143,7 +112,7 @@ int main() {
     for (int j = i + 1; j < masses.size(); j++) {
       init_p_energy +=
           masses[i] * masses[j] /
-          std::sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
+          sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
                     (rr[i * 6 + 1] - rr[j * 6 + 1]) *
                         (rr[i * 6 + 1] - rr[j * 6 + 1]) +
                     (rr[i * 6 + 2] - rr[j * 6 + 2]) *
@@ -170,25 +139,18 @@ int main() {
   rr[moonNum * 6 + 4] = moon_res[4];
   rr[moonNum * 6 + 5] = moon_res[5];
 
-  current_type h(0.0625);
+  double h = 0.03125;
   auto start = std::chrono::high_resolution_clock::now();
   double t = 365;
   int sol_size = 2 * (int)(1 + t / h) - 1;
-  current_type *sol = (current_type *)malloc(sizeof(current_type) * sol_size *
-                                             6 * masses.size());
-  current_type *sol_back = (current_type *)malloc(sizeof(current_type) *
-                                                  sol_size * 6 * masses.size());
+  
   current_type *diff =
       (current_type *)malloc(sizeof(current_type) * sol_size * 2);
 
-  ABMD_calc_diff(rr, masses, h, t, sol, sol_back, diff);
+  ABMD_calc_diff(rr, masses, h, t,
+    init_energy, init_impulse_moment.data(), init_center_mass.data(),
+    diff);
 
-  for (int i = 0; i < sol_size; i++) {
-    current_type x = sol_back[i * 6 * masses.size()];
-    current_type y = sol_back[i * 6 * masses.size() + 2];
-    current_type z = sol_back[i * 6 * masses.size() + 4];
-    
-  }
   /*
     for (int i = 0; i < iterations; i++) {
       RungeKutta4(rr, masses, h);

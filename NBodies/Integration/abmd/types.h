@@ -20,6 +20,10 @@ using ABMD_RHSD = void (*)(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[],
                            ABMD_DOUBLE *out, void *context);
 
 template <typename ABMD_DOUBLE>
+using CALLBACK_FNC = int (*)(double *t, ABMD_DOUBLE *state, void *context);
+
+
+template <typename ABMD_DOUBLE>
 struct ABMD {
   ABMD_RHS<ABMD_DOUBLE> f1;
   ABMD_RHSD<ABMD_DOUBLE> f2;
@@ -37,7 +41,8 @@ struct ABMD {
   void *context;
   void (*init_call)(ABMD_DOUBLE[], void *);
   double *callback_t;
-  int (*callback)(double *t, ABMD_DOUBLE state[], void *context);
+  //int (*callback)(double *t, double *state, void *context);
+  CALLBACK_FNC<ABMD_DOUBLE> callback;
   int **delayed_idxs;
   int *delayed_idxs_lens;
   int *dx_delays_idxs;

@@ -204,6 +204,12 @@ struct ContextData{
   ABMD_DOUBLE *sol;
   ABMD_DOUBLE *sol_back;
   double *callback_t;
+  ABMD_DOUBLE *energy;
+  ABMD_DOUBLE *impulse;
+  ABMD_DOUBLE *center;
+  ABMD_DOUBLE init_energy;
+  ABMD_DOUBLE *init_impulse;
+  ABMD_DOUBLE *init_center;
   int i;
   int dim;
   FILE *f;
@@ -246,7 +252,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
       ABMD_DOUBLE _dx = x[6 * j] - x[6 * i], _dy = x[6 * j + 1] - x[6 * i + 1],
            _dz = x[6 * j + 2] - x[6 * i + 2];
       ABMD_DOUBLE _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
-      ABMD_DOUBLE _dist = std::sqrt(_dist2);
+      ABMD_DOUBLE _dist = sqrt(_dist2);
 
       ABMD_DOUBLE _dist3 = _dist * _dist2;
 
