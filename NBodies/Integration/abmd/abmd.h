@@ -549,9 +549,13 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
   calc_invariants(state, abm_test->objects->masses.data(), abm_test->objects->n_objects,
                     abm_test->init_energy, abm_test->init_impulse, abm_test->init_center,
                     &abm_test->energy[abm_test->i], &abm_test->impulse[abm_test->i], &abm_test->center[abm_test->i]);
+  
   for (int i = 0; i < dim; i++) {
     fprintf(abm_test->f, " %.16le", state[i]);
   }
+  fprintf(abm_test->f, " %.16le", abm_test->energy[abm_test->i]);
+  fprintf(abm_test->f, " %.16le", abm_test->impulse[abm_test->i]);
+  fprintf(abm_test->f, " %.16le", abm_test->center[abm_test->i]);
   abm_test->i++;
   fprintf(abm_test->f, "\n");
   t[0] += 1 / 32.0;
