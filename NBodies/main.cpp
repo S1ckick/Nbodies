@@ -7,8 +7,8 @@
 #include <iostream>
 #include <string>
 
-#define NUMBER_DOUBLE 1
-//#define NUMBER_DOUBLE_DOUBLE 1
+//#define NUMBER_DOUBLE 1
+#define NUMBER_DOUBLE_DOUBLE 1
 
 #include "Integration/abmd/abmd.h"
 #include "Integration/methods.h"
@@ -93,9 +93,9 @@ int main() {
     rr[i * 6] -= init_center_mass[0];
     rr[i * 6 + 1] -= init_center_mass[1];
     rr[i * 6 + 2] -= init_center_mass[2];
-    rr[i * 6 + 3] -= init_vel_mass[3];
-    rr[i * 6 + 4] -= init_vel_mass[4];
-    rr[i * 6 + 5] -= init_vel_mass[5];
+    rr[i * 6 + 3] -= init_vel_mass[0];
+    rr[i * 6 + 4] -= init_vel_mass[1];
+    rr[i * 6 + 5] -= init_vel_mass[2];
   }
 
   current_type init_energy = 0;

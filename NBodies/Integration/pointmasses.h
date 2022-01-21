@@ -215,6 +215,7 @@ struct ContextData{
   FILE *f;
   FILE *fb;
 };
+int counter = 0;
 
 template <typename ABMD_DOUBLE>
 void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, void *context) {
@@ -246,12 +247,20 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   x[6 * moonNum + 4] = earth_vy + gcmoon_vy;
   x[6 * moonNum + 5] = earth_vz + gcmoon_vz;
 
+
   // Precalculate dx, dy, dz, distances
   for (i = 0; i < barrier; i++) {
     for (j = i + 1; j < barrier; j++) {
       ABMD_DOUBLE _dx = x[6 * j] - x[6 * i], _dy = x[6 * j + 1] - x[6 * i + 1],
            _dz = x[6 * j + 2] - x[6 * i + 2];
       ABMD_DOUBLE _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
+      counter++;
+      if(counter == 2927401){
+        int a = 10;
+      }
+      if (counter % 1000 == 0 || (counter >= 2927000 && counter <= 2928000)){
+        //std::cout << counter << std::endl;
+      }
       ABMD_DOUBLE _dist = sqrt(_dist2);
 
       ABMD_DOUBLE _dist3 = _dist * _dist2;

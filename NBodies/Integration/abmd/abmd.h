@@ -524,12 +524,13 @@ void calc_invariants(
         init_impulse_moment[1] * init_impulse_moment[1] +
         init_impulse_moment[2] * init_impulse_moment[2]);
 
-  *new_center = sqrt((init_center[0] - center_mass[0]) *
-                                  (init_center[0] - center_mass[0]) +
-                              (init_center[1] - center_mass[1]) *
-                                  (init_center[1] - center_mass[1]) +
-                              (init_center[2] - center_mass[2]) *
-                                  (init_center[2] - center_mass[2]));
+  
+  *new_center = sqrt((center_mass[0]) *
+                                  (center_mass[0]) +
+                              (center_mass[1]) *
+                                  (center_mass[1]) +
+                              (center_mass[2]) *
+                                  (center_mass[2]));
 
   rr[moonNum * 6] = moon_res_i[0];
   rr[moonNum * 6 + 1] = moon_res_i[1];
@@ -551,11 +552,11 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
                     &abm_test->energy[abm_test->i], &abm_test->impulse[abm_test->i], &abm_test->center[abm_test->i]);
   
   for (int i = 0; i < dim; i++) {
-    fprintf(abm_test->f, " %.16le", state[i]);
+    fprintf(abm_test->f, " %.16le", to_double(state[i]));
   }
-  fprintf(abm_test->f, " %.16le", abm_test->energy[abm_test->i]);
-  fprintf(abm_test->f, " %.16le", abm_test->impulse[abm_test->i]);
-  fprintf(abm_test->f, " %.16le", abm_test->center[abm_test->i]);
+  //fprintf(abm_test->f, " %.16le", to_double(abm_test->energy[abm_test->i]));
+  //fprintf(abm_test->f, " %.16le", to_double(abm_test->impulse[abm_test->i]));
+  //fprintf(abm_test->f, " %.16le", to_double(abm_test->center[abm_test->i]));
   abm_test->i++;
   fprintf(abm_test->f, "\n");
   t[0] += 1 / 32.0;
@@ -570,7 +571,7 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
   memcpy(&abm_test->sol_back[abm_test->i * dim], state,
          dim * sizeof(ABMD_DOUBLE));
   for (int i = 0; i < dim; i++) {
-    fprintf(abm_test->fb, " %.16le", state[i]);
+    fprintf(abm_test->fb, " %.16le", to_double(state[i]));
   }
   abm_test->i++;
   fprintf(abm_test->fb, "\n");
@@ -625,7 +626,17 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   abm->callback_t = &callback_t;
   abm->context = &abm_test;
 
+
+
+ ABMD_DOUBLE *prev_final_state =
+      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * dim);
+
   ABMD_run(abm);
+
+  for(int i = 0; i < dim; i++){
+    prev_final_state[i] = abm->final_state[i];
+  }
+
   // printf("Final: %e %e\n", abmd_get_final_state(abm)[0],
   // abmd_get_final_state(abm)[2]);
   abmd_destroy(abm);
@@ -641,7 +652,7 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   }
 
   abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h,
-                    &sol[(sol_size - 1) * dim]);
+                    prev_final_state);
   abm->callback = callback_back;
   abm->callback_t = &callback_t;
   abm->context = &abm_test;
@@ -651,6 +662,7 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_run(abm);
   abmd_destroy(abm);
 
+/*
   for (int i = 0; i < sol_size; i++) {
     ABMD_DOUBLE x1 = sol_reversed[i * dim];
     ABMD_DOUBLE x2 = sol_back[i * dim];
@@ -663,6 +675,7 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
     diff[i * 2] = t0 + i * h;
     diff[i * 2 + 1] = (ABMD_DOUBLE)sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
   }
+  */
 
   free(data_energy);
   free(data_impulse);
