@@ -212,8 +212,8 @@ struct ContextData{
   ABMD_DOUBLE *init_center;
   int i;
   int dim;
-  FILE *f;
-  FILE *fb;
+  std::ofstream f;
+  std::ofstream fb;
 };
 int counter = 0;
 

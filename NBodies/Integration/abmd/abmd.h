@@ -552,13 +552,13 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
                     &abm_test->energy[abm_test->i], &abm_test->impulse[abm_test->i], &abm_test->center[abm_test->i]);
   
   for (int i = 0; i < dim; i++) {
-    fprintf(abm_test->f, " %.16le", to_double(state[i]));
+    abm_test->f << " " << state[i];//fprintf(abm_test->f, " %.16le", state[i]);
   }
   //fprintf(abm_test->f, " %.16le", to_double(abm_test->energy[abm_test->i]));
   //fprintf(abm_test->f, " %.16le", to_double(abm_test->impulse[abm_test->i]));
   //fprintf(abm_test->f, " %.16le", to_double(abm_test->center[abm_test->i]));
   abm_test->i++;
-  fprintf(abm_test->f, "\n");
+  abm_test->f << "\n";//fprintf(abm_test->f, "\n");
   t[0] += 1 / 32.0;
 
   return 1;
@@ -571,10 +571,10 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
   memcpy(&abm_test->sol_back[abm_test->i * dim], state,
          dim * sizeof(ABMD_DOUBLE));
   for (int i = 0; i < dim; i++) {
-    fprintf(abm_test->fb, " %.16le", to_double(state[i]));
+    abm_test->f << " " << state[i];//fprintf(abm_test->fb, " %.16le", to_double(state[i]));
   }
   abm_test->i++;
-  fprintf(abm_test->fb, "\n");
+  abm_test->f << "\n";//fprintf(abm_test->fb, "\n");
   t[0] -= 1 / 32.0;
   //  t[0] -= 1 / 16.0;
   return 1;
@@ -617,8 +617,9 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
                                     .init_center=init_center,
                                     .i = 0,
                                     .dim = dim,
-                                    .f = fopen("res_out.txt", "wt"),
-                                    .fb = fopen("res_b_out.txt", "wt")};
+                                    .f = std::ofstream("res_out.txt"),//fopen("res_out.txt", "wt"),
+                                    .fb = std::ofstream("res_b_out.txt")
+                                    };//fopen("res_b_out.txt", "wt")};
   ABMD<ABMD_DOUBLE> *abm =
       abmd_create(pointmassesCalculateXdot_tmp, dim, t0, t1, h, x.data());
 
