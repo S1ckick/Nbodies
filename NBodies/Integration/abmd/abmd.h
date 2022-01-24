@@ -552,7 +552,7 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
                     &abm_test->energy[abm_test->i], &abm_test->impulse[abm_test->i], &abm_test->center[abm_test->i]);
   
   for (int i = 0; i < dim; i++) {
-    abm_test->f << " " << state[i];//fprintf(abm_test->f, " %.16le", state[i]);
+    abm_test->f << " " << std::setprecision(30) << state[i];//fprintf(abm_test->f, " %.16le", state[i]);
   }
   //fprintf(abm_test->f, " %.16le", to_double(abm_test->energy[abm_test->i]));
   //fprintf(abm_test->f, " %.16le", to_double(abm_test->impulse[abm_test->i]));
@@ -571,10 +571,10 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
   memcpy(&abm_test->sol_back[abm_test->i * dim], state,
          dim * sizeof(ABMD_DOUBLE));
   for (int i = 0; i < dim; i++) {
-    abm_test->f << " " << state[i];//fprintf(abm_test->fb, " %.16le", to_double(state[i]));
+    abm_test->fb << " " << std::setprecision(30) << state[i];//fprintf(abm_test->fb, " %.16le", to_double(state[i]));
   }
   abm_test->i++;
-  abm_test->f << "\n";//fprintf(abm_test->fb, "\n");
+  abm_test->fb << "\n";//fprintf(abm_test->fb, "\n");
   t[0] -= 1 / 32.0;
   //  t[0] -= 1 / 16.0;
   return 1;
