@@ -141,11 +141,11 @@ int main() {
 
   double h = 0.03125;
   auto start = std::chrono::high_resolution_clock::now();
-  double t = 365;
+  double t = 365*40;
   int sol_size = 2 * (int)(1 + t / h) - 1;
   
   current_type *diff =
-      (current_type *)malloc(sizeof(current_type) * sol_size * 2);
+      (current_type *)malloc(sizeof(current_type) * sol_size);
 
   ABMD_calc_diff(rr, masses, h, t,
     init_energy, init_impulse_moment.data(), init_center_mass.data(),

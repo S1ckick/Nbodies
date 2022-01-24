@@ -592,7 +592,7 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   int dim = 6 * masses.size();
 
   int n = (int)(1 + (t1 - t0) / h);
-  int sol_size = 2 * n - 1;
+  int sol_size = n;
   //  int sol_size = n;
   double callback_t = 0;
 
@@ -662,6 +662,26 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
 
   ABMD_run(abm);
   abmd_destroy(abm);
+
+
+  for(int i = 0, j = sol_size-1; i < sol_size; i++, j--){
+    ABMD_DOUBLE x1 = sol[i*dim + 6*4];
+    ABMD_DOUBLE x2 = sol_back[j*dim + 6*4];
+
+    ABMD_DOUBLE y1 = sol[i*dim + 6*4 + 2];
+    ABMD_DOUBLE y2 = sol_back[j*dim + 6*4 + 2];
+
+    ABMD_DOUBLE z1 = sol[i*dim + 6*4 + 4];
+    ABMD_DOUBLE z2 = sol_back[j*dim + 6*4 + 4];
+
+    diff[i] = sqrt(pow(x1-x2, 2) + pow(y1-y2, 2) + pow(z1-z2, 2));
+  }
+
+  std::ofstream diff_file = std::ofstream("Mars_diff.txt");
+
+  for (int i = 0; i < sol_size; i++) {
+    diff_file << " " << std::setprecision(30) << diff[i] << std::endl;
+  }
 
 /*
   for (int i = 0; i < sol_size; i++) {

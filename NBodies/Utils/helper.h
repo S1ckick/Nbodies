@@ -8,15 +8,16 @@
 #include <iostream>
 using namespace std;
 
+/*
 void round_string(char *s, int precision, int *offset){
-    /*
-     Input string must be all digits or errors will occur.
-     */
+    
+    // Input string must be all digits or errors will occur.
+     
 
     int i;
     int D = precision ;
 
-    /* Round, handle carry */
+    // Round, handle carry 
     if (D>0 && s[D] >= '5') {
         s[D-1]++;
 
@@ -27,7 +28,7 @@ void round_string(char *s, int precision, int *offset){
         }
     }
 
-    /* If first digit is 10, shift everything. */
+    // If first digit is 10, shift everything. 
     if (s[0] > '9') {
         // e++; // don't modify exponent here
         for (i = precision; i >= 1; i--) s[i+1] = s[i];
@@ -40,6 +41,7 @@ void round_string(char *s, int precision, int *offset){
 
     s[precision] = 0; // add terminator for array
 }
+*/
 
 void append_expn(std::string &str, int expn) {
     int k;
