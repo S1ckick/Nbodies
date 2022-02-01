@@ -3,7 +3,6 @@
 
 #include <cstdlib>
 #include "types.h"
-
 double c2  = 0.526001519587677318785587544488E-01,
        c3  = 0.789002279381515978178381316732E-01,
        c4  = 0.118350341907227396726757197510E+00,
@@ -153,6 +152,8 @@ read("5.42937341165687622380535766363E-2", b1);
 #endif
   }
 };
+
+#define TEST_1
 
 template <typename ABMD_DOUBLE>
 void rk4_step(ABMD_RHS<ABMD_DOUBLE> f, double h, double t, ABMD_DOUBLE *x, int dim, void *context,

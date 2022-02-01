@@ -4,7 +4,6 @@ project(NBodies LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories("qd/2.3.22/include")
-link_directories("qd/2.3.22/lib")
 
 
 

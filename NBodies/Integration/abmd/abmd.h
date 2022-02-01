@@ -27,8 +27,7 @@ ABMD_DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
     ABMD_DOUBLE(2.5221445e7) / ABMD_DOUBLE(9.8402304e7),
     ABMD_DOUBLE(8.092989203533249e15) / ABMD_DOUBLE(3.201186852864e16),
     ABMD_DOUBLE(8.5455477715379e13) / ABMD_DOUBLE(3.4237292544e14),
-    ABMD_DOUBLE(1.2600467236042756559e19) / ABMD_DOUBLE(5.109094217170944e19)
-};
+    ABMD_DOUBLE(1.2600467236042756559e19) / ABMD_DOUBLE(5.109094217170944e19)};
 
 /********** ABMD method **********/
 template <typename ABMD_DOUBLE>
@@ -109,11 +108,13 @@ void copy_delayed_states(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[], int ndelays,
 template <typename ABMD_DOUBLE>
 void rhs(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[], ABMD_DOUBLE dxs_delayed[],
          double t, ABMD_DOUBLE *out, void *abm_data) {
+  auto st1 = std::chrono::high_resolution_clock::now();
   ABMData<ABMD_DOUBLE> *data = (ABMData<ABMD_DOUBLE> *)abm_data;
   int dim = data->input.dim;
   ABMD_DOUBLE *temp = data->temp;
 
   memset(out, 0, sizeof(ABMD_DOUBLE) * dim);
+  auto st2 = std::chrono::high_resolution_clock::now();
 
   if (data->input.f1 == NULL) {
     data->input.f2(x, xs_delayed, dxs_delayed, t, out, data->input.context);
@@ -121,6 +122,7 @@ void rhs(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[], ABMD_DOUBLE dxs_delayed[],
   }
 
   data->input.f1(x, t, out, data->input.context);
+  auto st3 = std::chrono::high_resolution_clock::now();
 
   if (data->input.f2 == NULL) return;
 
@@ -241,7 +243,7 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
   //   abm->error = "Both RHSs are NULL";
   //   return 1;
   // }
-
+  auto start = std::chrono::high_resolution_clock::now();
   int dim = abm->dim;
   double t0 = abm->t0;
   double t1 = abm->t1;
@@ -368,30 +370,48 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
   free(rk4_sol);
   free(init);
 
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration =
+      std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
   // Main ABM loop
   int start_index = rk4_i1 + 1;
   for (int i = start_index; i < n; i++) {
     double t = t0 + i * h;
 
+    auto st1 = std::chrono::high_resolution_clock::now();
     abm_data.predict();
+    auto st2 = std::chrono::high_resolution_clock::now();
     ABMD_DOUBLE *rhs_out = queue->peek_right_dx();
     get_delayed_states(&abm_data, t, 0, xs_delayed, dxs_delayed);
+    auto st3 = std::chrono::high_resolution_clock::now();
     rhs(queue->peek_right_x(), xs_delayed, dxs_delayed, t, rhs_out, &abm_data);
+    auto st4 = std::chrono::high_resolution_clock::now();
+
+
+
+
 
     queue->update_diffs();
     ABMD_DOUBLE *predicted = queue->peek_right_x();
     queue->backup_last_x();
+    auto st5 = std::chrono::high_resolution_clock::now();
     abm_data.correct(predicted);
+    auto st6 = std::chrono::high_resolution_clock::now();
 
     get_delayed_states(&abm_data, t, 1, xs_delayed, dxs_delayed);
     rhs(queue->peek_right_x(), xs_delayed, dxs_delayed, t, rhs_out, &abm_data);
+    auto st7 = std::chrono::high_resolution_clock::now();
 
     queue->update_diffs();
     queue->restore_last_x();
+    auto st8 = std::chrono::high_resolution_clock::now();
     abm_data.correct(nullptr);
+    auto st9 = std::chrono::high_resolution_clock::now();
 
     queue->swap_diffs();
-
+   
+    auto st10 = std::chrono::high_resolution_clock::now();
     while (run_callback && (t - h) * hsgn <= *callback_t * hsgn &&
            *callback_t * hsgn <= t * hsgn) {
       queue->evaluate_x_all(*callback_t, callback_state_l);
@@ -400,6 +420,7 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
       // }
       run_callback = abm->callback(callback_t, callback_state_l, abm->context);
     }
+    auto st11 = std::chrono::high_resolution_clock::now();
   }
 
   for (int i = 0; i < dim; i++) {
@@ -407,13 +428,12 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
   }
 
   // destroy_abm_data(abm_data);
-  //free(callback_state);
+  // free(callback_state);
   free(callback_state_l);
 }
 
 template <typename ABMD_DOUBLE>
-void moonToGeocentric(ABMD_DOUBLE *rr,
-                      ABMD_DOUBLE *res) {
+void moonToGeocentric(ABMD_DOUBLE *rr, ABMD_DOUBLE *res) {
   ABMD_DOUBLE earth_x = rr[earthNum * 6];
   ABMD_DOUBLE earth_y = rr[earthNum * 6 + 1];
   ABMD_DOUBLE earth_z = rr[earthNum * 6 + 2];
@@ -444,11 +464,10 @@ void moonToGeocentric(ABMD_DOUBLE *rr,
 }
 
 template <typename ABMD_DOUBLE>
-void calc_invariants(
-                      ABMD_DOUBLE *rr, ABMD_DOUBLE *masses, int num,
-                      ABMD_DOUBLE init_energy, ABMD_DOUBLE *init_impulse_moment, ABMD_DOUBLE *init_center,
-                      ABMD_DOUBLE *new_energy, ABMD_DOUBLE *new_impulse_moment, ABMD_DOUBLE *new_center
-                    ) {
+void calc_invariants(ABMD_DOUBLE *rr, ABMD_DOUBLE *masses, int num,
+                     ABMD_DOUBLE init_energy, ABMD_DOUBLE *init_impulse_moment,
+                     ABMD_DOUBLE *init_center, ABMD_DOUBLE *new_energy,
+                     ABMD_DOUBLE *new_impulse_moment, ABMD_DOUBLE *new_center) {
   /// for energy fix need change moon center
   ABMD_DOUBLE *moon_res_i = (ABMD_DOUBLE *)malloc(6 * sizeof(ABMD_DOUBLE));
   moonToGeocentric(rr, moon_res_i);
@@ -477,22 +496,20 @@ void calc_invariants(
   ABMD_DOUBLE energy = 0;
   ABMD_DOUBLE k_energy = 0;
   for (int t = 0; t < num; t++) {
-    k_energy +=
-        masses[t] *
-        (rr[t * 6 + 3] * rr[t * 6 + 3] + rr[t * 6 + 4] * rr[t * 6 + 4] +
-          rr[t * 6 + 5] * rr[t * 6 + 5]) /
-        2.0;
+    k_energy += masses[t] *
+                (rr[t * 6 + 3] * rr[t * 6 + 3] + rr[t * 6 + 4] * rr[t * 6 + 4] +
+                 rr[t * 6 + 5] * rr[t * 6 + 5]) /
+                2.0;
   }
   ABMD_DOUBLE p_energy = 0;
   for (int t = 0; t < num; t++) {
     for (int j = t + 1; j < num; j++) {
-      p_energy +=
-          masses[t] * masses[j] /
-            sqrt((rr[t * 6] - rr[j * 6]) * (rr[t * 6] - rr[j * 6]) +
-                    (rr[t * 6 + 1] - rr[j * 6 + 1]) *
-                        (rr[t * 6 + 1] - rr[j * 6 + 1]) +
-                    (rr[t * 6 + 2] - rr[j * 6 + 2]) *
-                        (rr[t * 6 + 2] - rr[j * 6 + 2]));
+      p_energy += masses[t] * masses[j] /
+                  sqrt((rr[t * 6] - rr[j * 6]) * (rr[t * 6] - rr[j * 6]) +
+                       (rr[t * 6 + 1] - rr[j * 6 + 1]) *
+                           (rr[t * 6 + 1] - rr[j * 6 + 1]) +
+                       (rr[t * 6 + 2] - rr[j * 6 + 2]) *
+                           (rr[t * 6 + 2] - rr[j * 6 + 2]));
     }
   }
   energy = k_energy - p_energy;
@@ -513,24 +530,19 @@ void calc_invariants(
 
   *new_energy = (abs((energy - init_energy) / init_energy));
 
-  *new_impulse_moment =
-      sqrt((impulse_moment[0] - init_impulse_moment[0]) *
-                    (impulse_moment[0] - init_impulse_moment[0]) +
-                (impulse_moment[1] - init_impulse_moment[1]) *
-                    (impulse_moment[1] - init_impulse_moment[1]) +
-                (impulse_moment[2] - init_impulse_moment[2]) *
-                    (impulse_moment[2] - init_impulse_moment[2])) /
-      (init_impulse_moment[0] * init_impulse_moment[0] +
-        init_impulse_moment[1] * init_impulse_moment[1] +
-        init_impulse_moment[2] * init_impulse_moment[2]);
+  *new_impulse_moment = sqrt((impulse_moment[0] - init_impulse_moment[0]) *
+                                 (impulse_moment[0] - init_impulse_moment[0]) +
+                             (impulse_moment[1] - init_impulse_moment[1]) *
+                                 (impulse_moment[1] - init_impulse_moment[1]) +
+                             (impulse_moment[2] - init_impulse_moment[2]) *
+                                 (impulse_moment[2] - init_impulse_moment[2])) /
+                        (init_impulse_moment[0] * init_impulse_moment[0] +
+                         init_impulse_moment[1] * init_impulse_moment[1] +
+                         init_impulse_moment[2] * init_impulse_moment[2]);
 
-  
-  *new_center = sqrt((center_mass[0]) *
-                                  (center_mass[0]) +
-                              (center_mass[1]) *
-                                  (center_mass[1]) +
-                              (center_mass[2]) *
-                                  (center_mass[2]));
+  *new_center = sqrt((center_mass[0]) * (center_mass[0]) +
+                     (center_mass[1]) * (center_mass[1]) +
+                     (center_mass[2]) * (center_mass[2]));
 
   rr[moonNum * 6] = moon_res_i[0];
   rr[moonNum * 6 + 1] = moon_res_i[1];
@@ -547,18 +559,24 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
   int dim = abm_test->dim;
   memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(ABMD_DOUBLE));
-  calc_invariants(state, abm_test->objects->masses.data(), abm_test->objects->n_objects,
-                    abm_test->init_energy, abm_test->init_impulse, abm_test->init_center,
-                    &abm_test->energy[abm_test->i], &abm_test->impulse[abm_test->i], &abm_test->center[abm_test->i]);
   
+  calc_invariants(
+      state, abm_test->objects->masses.data(), abm_test->objects->n_objects,
+      abm_test->init_energy, abm_test->init_impulse, abm_test->init_center,
+      &abm_test->energy[abm_test->i], &abm_test->impulse[abm_test->i],
+      &abm_test->center[abm_test->i]);
+
+
   for (int i = 0; i < dim; i++) {
-    abm_test->f << " " << std::setprecision(30) << state[i];//fprintf(abm_test->f, " %.16le", state[i]);
+    abm_test->f << " " << std::setprecision(30)
+                << state[i]; 
   }
-  //fprintf(abm_test->f, " %.16le", to_double(abm_test->energy[abm_test->i]));
-  //fprintf(abm_test->f, " %.16le", to_double(abm_test->impulse[abm_test->i]));
-  //fprintf(abm_test->f, " %.16le", to_double(abm_test->center[abm_test->i]));
+  
+   abm_test->f << " " << to_double(abm_test->energy[abm_test->i]);
+   abm_test->f << " " << to_double(abm_test->impulse[abm_test->i]);
+   abm_test->f << " " << to_double(abm_test->center[abm_test->i]);
   abm_test->i++;
-  abm_test->f << "\n";//fprintf(abm_test->f, "\n");
+  abm_test->f << "\n";
   t[0] += 1 / 32.0;
 
   return 1;
@@ -570,11 +588,15 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol_back[abm_test->i * dim], state,
          dim * sizeof(ABMD_DOUBLE));
+         
   for (int i = 0; i < dim; i++) {
-    abm_test->fb << " " << std::setprecision(30) << state[i];//fprintf(abm_test->fb, " %.16le", to_double(state[i]));
+    abm_test->fb
+        << " " << std::setprecision(30)
+        << state[i];  
   }
+  
   abm_test->i++;
-  abm_test->fb << "\n";//fprintf(abm_test->fb, "\n");
+  abm_test->fb << "\n"; 
   t[0] -= 1 / 32.0;
   //  t[0] -= 1 / 16.0;
   return 1;
@@ -582,11 +604,10 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
 
 template <typename ABMD_DOUBLE>
 void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
-                    std::vector<ABMD_DOUBLE> masses, 
-                    double h, double t1,
-                    ABMD_DOUBLE init_energy, ABMD_DOUBLE *init_impulse, ABMD_DOUBLE *init_center,
-                    ABMD_DOUBLE *diff) {
-  int order = 11;
+                    std::vector<ABMD_DOUBLE> masses, double h, double t1,
+                    ABMD_DOUBLE init_energy, ABMD_DOUBLE *init_impulse,
+                    ABMD_DOUBLE *init_center, ABMD_DOUBLE *diff) {
+  int order = 13;
   double t0 = 0;
   // double h = 1 / 16.0;
   int dim = 6 * masses.size();
@@ -596,30 +617,33 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   //  int sol_size = n;
   double callback_t = 0;
 
-  ABMD_DOUBLE *sol = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size *
-                                             6 * masses.size());
-  ABMD_DOUBLE *sol_back = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) *
-                                                  sol_size * 6 * masses.size());
-  ABMD_DOUBLE *data_energy = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * (int)(100 + t1 / h));
-  ABMD_DOUBLE *data_impulse = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * (int)(100 + t1 / h));
-  ABMD_DOUBLE *data_center = (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * (int)(100 + t1 / h));
+  ABMD_DOUBLE *sol =
+      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 6 * masses.size());
+  ABMD_DOUBLE *sol_back =
+      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 6 * masses.size());
+  ABMD_DOUBLE *data_energy =
+      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * (int)(100 + t1 / h));
+  ABMD_DOUBLE *data_impulse =
+      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * (int)(100 + t1 / h));
+  ABMD_DOUBLE *data_center =
+      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * (int)(100 + t1 / h));
 
   ObjectsData<ABMD_DOUBLE> *objects = new ObjectsData<ABMD_DOUBLE>(masses);
-  ContextData<ABMD_DOUBLE> abm_test{.objects = objects,
-                                    .sol = sol,
-                                    .sol_back = sol_back,
-                                    .callback_t = &callback_t,
-                                    .energy=data_energy,
-                                    .impulse=data_impulse,
-                                    .center=data_center,
-                                    .init_energy=init_energy,
-                                    .init_impulse=init_impulse,
-                                    .init_center=init_center,
-                                    .i = 0,
-                                    .dim = dim,
-                                    .f = std::ofstream("res_out.txt"),//fopen("res_out.txt", "wt"),
-                                    .fb = std::ofstream("res_b_out.txt")
-                                    };//fopen("res_b_out.txt", "wt")};
+  ContextData<ABMD_DOUBLE> abm_test{
+      .objects = objects,
+      .sol = sol,
+      .sol_back = sol_back,
+      .callback_t = &callback_t,
+      .energy = data_energy,
+      .impulse = data_impulse,
+      .center = data_center,
+      .init_energy = init_energy,
+      .init_impulse = init_impulse,
+      .init_center = init_center,
+      .i = 0,
+      .dim = dim,
+      .f = std::ofstream("res_out.txt"),      // fopen("res_out.txt", "wt"),
+      .fb = std::ofstream("res_b_out.txt")};  // fopen("res_b_out.txt", "wt")};
   ABMD<ABMD_DOUBLE> *abm =
       abmd_create(pointmassesCalculateXdot_tmp, dim, t0, t1, h, x.data());
 
@@ -627,14 +651,12 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   abm->callback_t = &callback_t;
   abm->context = &abm_test;
 
-
-
- ABMD_DOUBLE *prev_final_state =
+  ABMD_DOUBLE *prev_final_state =
       (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * dim);
 
   ABMD_run(abm);
 
-  for(int i = 0; i < dim; i++){
+  for (int i = 0; i < dim; i++) {
     prev_final_state[i] = abm->final_state[i];
   }
 
@@ -663,18 +685,17 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_run(abm);
   abmd_destroy(abm);
 
+  for (int i = 0, j = sol_size - 1; i < sol_size; i++, j--) {
+    ABMD_DOUBLE x1 = sol[i * dim + 6 * 1];
+    ABMD_DOUBLE x2 = sol_back[j * dim + 6 * 1];
 
-  for(int i = 0, j = sol_size-1; i < sol_size; i++, j--){
-    ABMD_DOUBLE x1 = sol[i*dim + 6*4];
-    ABMD_DOUBLE x2 = sol_back[j*dim + 6*4];
+    ABMD_DOUBLE y1 = sol[i * dim + 6 * 1 + 2];
+    ABMD_DOUBLE y2 = sol_back[j * dim + 6 * 1 + 2];
 
-    ABMD_DOUBLE y1 = sol[i*dim + 6*4 + 2];
-    ABMD_DOUBLE y2 = sol_back[j*dim + 6*4 + 2];
+    ABMD_DOUBLE z1 = sol[i * dim + 6 * 1 + 4];
+    ABMD_DOUBLE z2 = sol_back[j * dim + 6 * 1 + 4];
 
-    ABMD_DOUBLE z1 = sol[i*dim + 6*4 + 4];
-    ABMD_DOUBLE z2 = sol_back[j*dim + 6*4 + 4];
-
-    diff[i] = sqrt(pow(x1-x2, 2) + pow(y1-y2, 2) + pow(z1-z2, 2));
+    diff[i] = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
   }
 
   std::ofstream diff_file = std::ofstream("Mars_diff.txt");
@@ -683,20 +704,21 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
     diff_file << " " << std::setprecision(30) << diff[i] << std::endl;
   }
 
-/*
-  for (int i = 0; i < sol_size; i++) {
-    ABMD_DOUBLE x1 = sol_reversed[i * dim];
-    ABMD_DOUBLE x2 = sol_back[i * dim];
+  /*
+    for (int i = 0; i < sol_size; i++) {
+      ABMD_DOUBLE x1 = sol_reversed[i * dim];
+      ABMD_DOUBLE x2 = sol_back[i * dim];
 
-    ABMD_DOUBLE y1 = sol_reversed[i * dim + 2];
-    ABMD_DOUBLE y2 = sol_back[i * dim + 2];
+      ABMD_DOUBLE y1 = sol_reversed[i * dim + 2];
+      ABMD_DOUBLE y2 = sol_back[i * dim + 2];
 
-    ABMD_DOUBLE z1 = sol_reversed[i * dim + 4];
-    ABMD_DOUBLE z2 = sol_back[i * dim + 4];
-    diff[i * 2] = t0 + i * h;
-    diff[i * 2 + 1] = (ABMD_DOUBLE)sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
-  }
-  */
+      ABMD_DOUBLE z1 = sol_reversed[i * dim + 4];
+      ABMD_DOUBLE z2 = sol_back[i * dim + 4];
+      diff[i * 2] = t0 + i * h;
+      diff[i * 2 + 1] = (ABMD_DOUBLE)sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) +
+    pow(z1 - z2, 2));
+    }
+    */
 
   free(data_energy);
   free(data_impulse);

@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define ABMD_MAX_ORDER 19
-#define ABMD_DEFAULT_ORDER 11
+#define ABMD_DEFAULT_ORDER 13
 
 enum { METHOD_DOPRI8 = 1, METHOD_RK4 = 2 };
 
@@ -21,7 +21,6 @@ using ABMD_RHSD = void (*)(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[],
 
 template <typename ABMD_DOUBLE>
 using CALLBACK_FNC = int (*)(double *t, ABMD_DOUBLE *state, void *context);
-
 
 template <typename ABMD_DOUBLE>
 struct ABMD {
@@ -41,7 +40,7 @@ struct ABMD {
   void *context;
   void (*init_call)(ABMD_DOUBLE[], void *);
   double *callback_t;
-  //int (*callback)(double *t, double *state, void *context);
+  // int (*callback)(double *t, double *state, void *context);
   CALLBACK_FNC<ABMD_DOUBLE> callback;
   int **delayed_idxs;
   int *delayed_idxs_lens;

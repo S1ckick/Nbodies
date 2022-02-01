@@ -10,23 +10,21 @@
 //#define NUMBER_DOUBLE 1
 #define NUMBER_DOUBLE_DOUBLE 1
 
-#include "Integration/abmd/abmd.h"
-#include "Integration/methods.h"
-#include "Writer/writer.h"
-
 #ifdef NUMBER_DOUBLE_DOUBLE
 #include <qd/dd_real.h>
 #include <qd/fpu.h>
 
 using current_type = dd_real;
 #else
-using current_type = double;
+using current_type = long double;
 #endif
 
-//#include "Utils/helper.h"
+#include "Integration/abmd/abmd.h"
+#include "Utils/helper.h"
+#include "Writer/writer.h"
 
 using namespace std;
-//using current_type = double;
+// using current_type = double;
 
 int main() {
 #ifdef NUMBER_DOUBLE_DOUBLE
@@ -110,13 +108,12 @@ int main() {
   current_type init_p_energy = 0;
   for (int i = 0; i < masses.size(); i++) {
     for (int j = i + 1; j < masses.size(); j++) {
-      init_p_energy +=
-          masses[i] * masses[j] /
-          sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
-                    (rr[i * 6 + 1] - rr[j * 6 + 1]) *
-                        (rr[i * 6 + 1] - rr[j * 6 + 1]) +
-                    (rr[i * 6 + 2] - rr[j * 6 + 2]) *
-                        (rr[i * 6 + 2] - rr[j * 6 + 2]));
+      init_p_energy += masses[i] * masses[j] /
+                       sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
+                            (rr[i * 6 + 1] - rr[j * 6 + 1]) *
+                                (rr[i * 6 + 1] - rr[j * 6 + 1]) +
+                            (rr[i * 6 + 2] - rr[j * 6 + 2]) *
+                                (rr[i * 6 + 2] - rr[j * 6 + 2]));
     }
   }
   init_energy = init_k_energy - init_p_energy;
@@ -141,15 +138,13 @@ int main() {
 
   double h = 0.03125;
   auto start = std::chrono::high_resolution_clock::now();
-  double t = 365*40;
+  double t = 365 * 40;
   int sol_size = 2 * (int)(1 + t / h) - 1;
-  
-  current_type *diff =
-      (current_type *)malloc(sizeof(current_type) * sol_size);
 
-  ABMD_calc_diff(rr, masses, h, t,
-    init_energy, init_impulse_moment.data(), init_center_mass.data(),
-    diff);
+  current_type *diff = (current_type *)malloc(sizeof(current_type) * sol_size);
+
+  ABMD_calc_diff(rr, masses, h, t, init_energy, init_impulse_moment.data(),
+                 init_center_mass.data(), diff);
 
   /*
     for (int i = 0; i < iterations; i++) {
