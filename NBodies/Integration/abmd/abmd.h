@@ -568,17 +568,20 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
       &abm_test->center[abm_test->i]);
 */
 
-  for (int i = 0; i < dim-6*5; i++) {
-    abm_test->f << " " << std::setprecision(30)
-                << state[i]; 
-  }
+
+  // for (int i = 0; i < dim; i++) {
+  //   abm_test->f << " " << std::setprecision(30)
+  //               << state[i]; 
+  // }
+  
+  
   /*
    abm_test->f << " " << to_double(abm_test->energy[abm_test->i]);
    abm_test->f << " " << to_double(abm_test->impulse[abm_test->i]);
    abm_test->f << " " << to_double(abm_test->center[abm_test->i]);
    */
   abm_test->i++;
-  abm_test->f << "\n";
+  // abm_test->f << "\n";
   t[0] += 1 / 32.0;
 
   return 1;
@@ -590,15 +593,16 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol_back[abm_test->i * dim], state,
          dim * sizeof(ABMD_DOUBLE));
-         
-  for (int i = 0; i < dim; i++) {
-    abm_test->fb
-        << " " << std::setprecision(30)
-        << state[i];  
-  }
+      
+  // for (int i = 0; i < dim; i++) {
+  //   abm_test->fb
+  //       << " " << std::setprecision(30)
+  //       << state[i];  
+  // }
+  
   
   abm_test->i++;
-  abm_test->fb << "\n"; 
+  // abm_test->fb << "\n"; 
   t[0] -= 1 / 32.0;
   //  t[0] -= 1 / 16.0;
   return 1;
@@ -606,7 +610,7 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
 
 template <typename ABMD_DOUBLE>
 void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
-                    std::vector<ABMD_DOUBLE> masses, double h, double t1,
+                    std::vector<double> masses, double h, double t1,
                     ABMD_DOUBLE init_energy, ABMD_DOUBLE *init_impulse,
                     ABMD_DOUBLE *init_center, ABMD_DOUBLE *diff) {
   int order = 13;
@@ -662,19 +666,7 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
     prev_final_state[i] = abm->final_state[i];
   }
 
-  // printf("Final: %e %e\n", abmd_get_final_state(abm)[0],
-  // abmd_get_final_state(abm)[2]);
   abmd_destroy(abm);
-
-  ABMD_DOUBLE *sol_reversed =
-      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * dim);
-
-  for (int i = 0; i < sol_size; i++) {
-    memcpy(&sol_reversed[i * dim], &sol[(sol_size - i - 1) * dim],
-           sizeof(ABMD_DOUBLE) * dim);
-    sol_reversed[i * dim + 1] *= -1;
-    sol_reversed[i * dim + 3] *= -1;
-  }
 
   abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h,
                     prev_final_state);
@@ -687,46 +679,30 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_run(abm);
   abmd_destroy(abm);
 
-  for (int i = 0, j = sol_size - 1; i < sol_size; i++, j--) {
-    ABMD_DOUBLE x1 = sol[i * dim + 6 * 10];
-    ABMD_DOUBLE x2 = sol_back[j * dim + 6 * 10];
+  // for (int i = 0, j = sol_size - 1; i < sol_size; i++, j--) {
+  //   ABMD_DOUBLE x1 = sol[i * dim + 6 * 10];
+  //   ABMD_DOUBLE x2 = sol_back[j * dim + 6 * 10];
 
-    ABMD_DOUBLE y1 = sol[i * dim + 6 * 10 + 2];
-    ABMD_DOUBLE y2 = sol_back[j * dim + 6 * 10 + 2];
+  //   ABMD_DOUBLE y1 = sol[i * dim + 6 * 10 + 2];
+  //   ABMD_DOUBLE y2 = sol_back[j * dim + 6 * 10 + 2];
 
-    ABMD_DOUBLE z1 = sol[i * dim + 6 * 10 + 4];
-    ABMD_DOUBLE z2 = sol_back[j * dim + 6 * 10 + 4];
+  //   ABMD_DOUBLE z1 = sol[i * dim + 6 * 10 + 4];
+  //   ABMD_DOUBLE z2 = sol_back[j * dim + 6 * 10 + 4];
 
-    diff[i] = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
-  }
+  //   diff[i] = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
+  // }
 
-  std::ofstream diff_file = std::ofstream("Mars_diff.txt");
+  // std::ofstream diff_file = std::ofstream("Mars_diff.txt");
 
-  for (int i = 0; i < sol_size; i++) {
-    diff_file << " " << std::setprecision(30) << diff[i] << std::endl;
-  }
-
-  /*
-    for (int i = 0; i < sol_size; i++) {
-      ABMD_DOUBLE x1 = sol_reversed[i * dim];
-      ABMD_DOUBLE x2 = sol_back[i * dim];
-
-      ABMD_DOUBLE y1 = sol_reversed[i * dim + 2];
-      ABMD_DOUBLE y2 = sol_back[i * dim + 2];
-
-      ABMD_DOUBLE z1 = sol_reversed[i * dim + 4];
-      ABMD_DOUBLE z2 = sol_back[i * dim + 4];
-      diff[i * 2] = t0 + i * h;
-      diff[i * 2 + 1] = (ABMD_DOUBLE)sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) +
-    pow(z1 - z2, 2));
-    }
-    */
+  // for (int i = 0; i < sol_size; i++) {
+  //   diff_file << " " << std::setprecision(30) << diff[i] << std::endl;
+  // }
+  
 
   free(data_energy);
   free(data_impulse);
   free(data_center);
   free(sol);
-  free(sol_reversed);
   free(sol_back);
   free(diff);
 }

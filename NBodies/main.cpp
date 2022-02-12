@@ -31,7 +31,7 @@ int main() {
   long double x, y, z, vx, vy, vz, m;
   std::vector<current_type> rr;
   rr.resize(6 * 16);
-  std::vector<current_type> masses;
+  std::vector<double> masses;
   masses.resize(16);
   std::string name;
   int k = 0;
@@ -51,37 +51,38 @@ int main() {
   }
 
   /// for energy fix need change moon center
-  std::vector<current_type> moon_res(6, 0);
+  //std::vector<current_type> moon_res(6, 0);
   //moonToGeocentric(rr.data(), moon_res.data());
 
   current_type total_mass = 0;
-  for (int i = 0; i < masses.size(); i++) {
-    total_mass += masses[i];
-  }
+  
+  // for (int i = 0; i < masses.size(); i++) {
+  //   total_mass += masses[i];
+  // }
 
   std::vector<current_type> init_center_mass(3, 0);
 
-  for (int i = 0; i < masses.size(); i++) {
-    init_center_mass[0] += rr[i * 6] * masses[i];
-    init_center_mass[1] += rr[i * 6 + 1] * masses[i];
-    init_center_mass[2] += rr[i * 6 + 2] * masses[i];
-  }
+  // for (int i = 0; i < masses.size(); i++) {
+  //   init_center_mass[0] += rr[i * 6] * masses[i];
+  //   init_center_mass[1] += rr[i * 6 + 1] * masses[i];
+  //   init_center_mass[2] += rr[i * 6 + 2] * masses[i];
+  // }
 
-  init_center_mass[0] /= total_mass;
-  init_center_mass[1] /= total_mass;
-  init_center_mass[2] /= total_mass;
+  // init_center_mass[0] /= total_mass;
+  // init_center_mass[1] /= total_mass;
+  // init_center_mass[2] /= total_mass;
 
   std::vector<current_type> init_vel_mass(3, 0);
 
-  for (int i = 0; i < masses.size(); i++) {
-    init_vel_mass[0] += rr[i * 6 + 3] * masses[i];
-    init_vel_mass[1] += rr[i * 6 + 4] * masses[i];
-    init_vel_mass[2] += rr[i * 6 + 5] * masses[i];
-  }
+  // for (int i = 0; i < masses.size(); i++) {
+  //   init_vel_mass[0] += rr[i * 6 + 3] * masses[i];
+  //   init_vel_mass[1] += rr[i * 6 + 4] * masses[i];
+  //   init_vel_mass[2] += rr[i * 6 + 5] * masses[i];
+  // }
 
-  init_vel_mass[0] /= total_mass;
-  init_vel_mass[1] /= total_mass;
-  init_vel_mass[2] /= total_mass;
+  // init_vel_mass[0] /= total_mass;
+  // init_vel_mass[1] /= total_mass;
+  // init_vel_mass[2] /= total_mass;
 
   // for (int i = 0; i < masses.size(); i++) {
   //   rr[i * 6] -= init_center_mass[0];
@@ -94,36 +95,36 @@ int main() {
 
   current_type init_energy = 0;
   current_type init_k_energy = 0;
-  for (int i = 0; i < masses.size(); i++) {
-    init_k_energy +=
-        masses[i] *
-        (rr[i * 6 + 3] * rr[i * 6 + 3] + rr[i * 6 + 4] * rr[i * 6 + 4] +
-         rr[i * 6 + 5] * rr[i * 6 + 5]) /
-        2.0;
-  }
+  // for (int i = 0; i < masses.size(); i++) {
+  //   init_k_energy +=
+  //       masses[i] *
+  //       (rr[i * 6 + 3] * rr[i * 6 + 3] + rr[i * 6 + 4] * rr[i * 6 + 4] +
+  //        rr[i * 6 + 5] * rr[i * 6 + 5]) /
+  //       2.0;
+  // }
   current_type init_p_energy = 0;
-  for (int i = 0; i < masses.size(); i++) {
-    for (int j = i + 1; j < masses.size(); j++) {
-      init_p_energy += masses[i] * masses[j] /
-                       sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
-                            (rr[i * 6 + 1] - rr[j * 6 + 1]) *
-                                (rr[i * 6 + 1] - rr[j * 6 + 1]) +
-                            (rr[i * 6 + 2] - rr[j * 6 + 2]) *
-                                (rr[i * 6 + 2] - rr[j * 6 + 2]));
-    }
-  }
-  init_energy = init_k_energy - init_p_energy;
+  // for (int i = 0; i < masses.size(); i++) {
+  //   for (int j = i + 1; j < masses.size(); j++) {
+  //     init_p_energy += masses[i] * masses[j] /
+  //                      sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
+  //                           (rr[i * 6 + 1] - rr[j * 6 + 1]) *
+  //                               (rr[i * 6 + 1] - rr[j * 6 + 1]) +
+  //                           (rr[i * 6 + 2] - rr[j * 6 + 2]) *
+  //                               (rr[i * 6 + 2] - rr[j * 6 + 2]));
+  //   }
+  // }
+  // init_energy = init_k_energy - init_p_energy;
 
   std::vector<current_type> init_impulse_moment(3, 0);
-  for (int i = 0; i < masses.size(); i++) {
-    current_type temp_x = rr[i * 6 + 3] * masses[i];
-    current_type temp_y = rr[i * 6 + 4] * masses[i];
-    current_type temp_z = rr[i * 6 + 5] * masses[i];
+  // for (int i = 0; i < masses.size(); i++) {
+  //   current_type temp_x = rr[i * 6 + 3] * masses[i];
+  //   current_type temp_y = rr[i * 6 + 4] * masses[i];
+  //   current_type temp_z = rr[i * 6 + 5] * masses[i];
 
-    init_impulse_moment[0] += rr[i * 6 + 1] * temp_z - rr[i * 6 + 2] * temp_y;
-    init_impulse_moment[1] += rr[i * 6 + 2] * temp_x - rr[i * 6] * temp_z;
-    init_impulse_moment[2] += rr[i * 6] * temp_y - rr[i * 6 + 1] * temp_x;
-  }
+  //   init_impulse_moment[0] += rr[i * 6 + 1] * temp_z - rr[i * 6 + 2] * temp_y;
+  //   init_impulse_moment[1] += rr[i * 6 + 2] * temp_x - rr[i * 6] * temp_z;
+  //   init_impulse_moment[2] += rr[i * 6] * temp_y - rr[i * 6 + 1] * temp_x;
+  // }
 
   // rr[moonNum * 6] = moon_res[0];
   // rr[moonNum * 6 + 1] = moon_res[1];

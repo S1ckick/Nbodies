@@ -1,15 +1,23 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <cstring>
 const int earthNum = 3;
 const int moonNum = 10;
 const int barrier = 16;
+
+long double to_double(const long double &x)
+{
+  return x;
+}
+
+using debug_type =  double;
 
 template <typename Type>
 class ObjectsData
 {
 public:
-  ObjectsData(std::vector<Type> &data)
+  ObjectsData(std::vector<double> &data)
   {
     this->n_objects = data.size();
     masses.resize(this->n_objects);
@@ -23,14 +31,19 @@ public:
     this->dist.resize(this->n_objects * (this->n_objects + 1));
     this->dist2.resize(this->n_objects * (this->n_objects + 1));
     this->dist3.resize(this->n_objects * (this->n_objects + 1));
+
+    this->fx.resize(this->n_objects, 0);
+    this->fy.resize(this->n_objects, 0);
+    this->fz.resize(this->n_objects, 0);
     this->temp_acc.resize(this->n_objects * 3);
   }
 
-  std::vector<Type> masses;
+  std::vector<double> masses;
   int n_objects;
-  std::vector<Type> dx, dy, dz;
-  std::vector<Type> dist, dist2, dist3;
+  std::vector<debug_type> dx, dy, dz;
+  std::vector<debug_type> dist, dist2, dist3;
   std::vector<Type> temp_acc;
+  std::vector<debug_type> fx, fy, fz;
 };
 #define NO_RELATIVITY
 
@@ -56,10 +69,14 @@ struct ContextData
 template <typename ABMD_DOUBLE>
 void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, void *context)
 {
+
   int i, j, k;
   //userdata()
   // Copy velocities of bodies
   ObjectsData<ABMD_DOUBLE> *userdata = static_cast<ContextData<ABMD_DOUBLE> *>(context)->objects;
+  memset(&userdata->fx[0], sizeof(debug_type) * userdata->n_objects, 0);
+  memset(&userdata->fy[0], sizeof(debug_type) * userdata->n_objects, 0);
+  memset(&userdata->fz[0], sizeof(debug_type) * userdata->n_objects, 0);
   for (i = 0; i < userdata->n_objects; i++)
   {
     f[6 * i] = x[6 * i + 3];
@@ -85,46 +102,44 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   x[6 * moonNum + 4] = earth_vy + gcmoon_vy;
   x[6 * moonNum + 5] = earth_vz + gcmoon_vz;
 
+  ABMD_DOUBLE _dx_me, _dy_me, _dz_me, _dist2_me, _dist_me, _dist3_me;
+
   // Precalculate dx, dy, dz, distances
   for (i = 0; i < barrier; i++)
   {
     for (j = i + 1; j < barrier; j++)
     {
-      ABMD_DOUBLE _dx, _dy, _dz, _dist2, _dist, _dist3;
+      debug_type _dx, _dy, _dz, _dist2, _dist, _dist3;
+
       if (i == 3 && j == 10)
       {
-        _dx = x[6 * j] - x[6 * i];
-        _dy = x[6 * j + 1] - x[6 * i + 1];
-        _dz = x[6 * j + 2] - x[6 * i + 2];
-        _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
+        _dx_me = x[6 * j] - x[6 * i];
+        _dy_me = x[6 * j + 1] - x[6 * i + 1];
+        _dz_me = x[6 * j + 2] - x[6 * i + 2];
+        _dist2_me = 1.0 / (_dx_me * _dx_me + _dy_me * _dy_me + _dz_me * _dz_me);
+        _dist_me = sqrt(_dist2_me);
+        _dist3_me = _dist_me * _dist2_me;
       }
       else
       {
-        _dx = ABMD_DOUBLE(to_double(x[6 * j]) - to_double(x[6 * i]));
-        _dy = ABMD_DOUBLE(to_double(x[6 * j + 1]) - to_double(x[6 * i + 1]));
-        _dz = ABMD_DOUBLE(to_double(x[6 * j + 2]) - to_double(x[6 * i + 2]));
-        _dist2 = 1.0 / ABMD_DOUBLE(to_double(_dx * _dx) + to_double(_dy * _dy) + to_double(_dz * _dz));
+        _dx = to_double(x[6 * j]) - to_double(x[6 * i]);
+        _dy = to_double(x[6 * j + 1]) - to_double(x[6 * i + 1]);
+        _dz = to_double(x[6 * j + 2]) - to_double(x[6 * i + 2]);
+        _dist2 = 1.0 / ((_dx * _dx) + (_dy * _dy) + (_dz * _dz));
+        _dist = sqrt(_dist2);
+        _dist3 = _dist * _dist2;
+        userdata->dx[i * barrier + j] = _dx;
+        userdata->dy[i * barrier + j] = _dy;
+        userdata->dz[i * barrier + j] = _dz;
+
+        userdata->dx[j * barrier + i] = -_dx;
+        userdata->dy[j * barrier + i] = -_dy;
+        userdata->dz[j * barrier + i] = -_dz;
+
+        userdata->dist3[i * barrier + j] = _dist3;
+
+        userdata->dist3[j * barrier + i] = _dist3;
       }
-
-      _dist = sqrt(_dist2);
-
-      _dist3 = _dist * _dist2;
-
-      userdata->dx[i * barrier + j] = _dx;
-      userdata->dy[i * barrier + j] = _dy;
-      userdata->dz[i * barrier + j] = _dz;
-
-      userdata->dx[j * barrier + i] = -_dx;
-      userdata->dy[j * barrier + i] = -_dy;
-      userdata->dz[j * barrier + i] = -_dz;
-
-      userdata->dist[i * barrier + j] = _dist;
-      userdata->dist2[i * barrier + j] = _dist2;
-      userdata->dist3[i * barrier + j] = _dist3;
-
-      userdata->dist[j * barrier + i] = _dist;
-      userdata->dist2[j * barrier + i] = _dist2;
-      userdata->dist3[j * barrier + i] = _dist3;
     }
   }
 
@@ -133,22 +148,58 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   {
     for (j = i + 1; j < barrier; j++)
     {
-      ABMD_DOUBLE _dx = userdata->dx[i * barrier + j],
-                  _dy = userdata->dy[i * barrier + j],
-                  _dz = userdata->dz[i * barrier + j];
-      ABMD_DOUBLE _dist3 = userdata->dist3[i * barrier + j];
+      if (i == 3 && j == 10)
+      {
+        ABMD_DOUBLE k_dx = _dx_me * _dist3_me;
+        ABMD_DOUBLE k_dy = _dy_me * _dist3_me;
+        ABMD_DOUBLE k_dz = _dz_me * _dist3_me;
 
-      ABMD_DOUBLE k_dx = _dx * _dist3;
-      ABMD_DOUBLE k_dy = _dy * _dist3;
-      ABMD_DOUBLE k_dz = _dz * _dist3;
+        userdata->fx[i] += to_double(userdata->masses[j] * k_dx);
+        userdata->fy[i] += to_double(userdata->masses[j] * k_dy);
+        userdata->fz[i] += to_double(userdata->masses[j] * k_dz);
+        userdata->fx[j] -= to_double(userdata->masses[i] * k_dx);
+        userdata->fy[j] -= to_double(userdata->masses[i] * k_dy);
+        userdata->fz[j] -= to_double(userdata->masses[i] * k_dz);
 
-      f[6 * i + 3] += ABMD_DOUBLE(to_double(userdata->masses[j]) * to_double(k_dx));
-      f[6 * i + 4] += ABMD_DOUBLE(to_double(userdata->masses[j]) * to_double(k_dy));
-      f[6 * i + 5] += ABMD_DOUBLE(to_double(userdata->masses[j]) * to_double(k_dz));
-      f[6 * j + 3] -= ABMD_DOUBLE(to_double(userdata->masses[i]) * to_double(k_dx));
-      f[6 * j + 4] -= ABMD_DOUBLE(to_double(userdata->masses[i]) * to_double(k_dy));
-      f[6 * j + 5] -= ABMD_DOUBLE(to_double(userdata->masses[i]) * to_double(k_dz));
+        // f[6 * i + 3] += userdata->masses[j] * k_dx;
+        // f[6 * i + 4] += userdata->masses[j] * k_dy;
+        // f[6 * i + 5] += userdata->masses[j] * k_dz;
+        // f[6 * j + 3] -= userdata->masses[i] * k_dx;
+        // f[6 * j + 4] -= userdata->masses[i] * k_dy;
+        // f[6 * j + 5] -= userdata->masses[i] * k_dz;
+      }
+      else
+      {
+        debug_type _dx = userdata->dx[i * barrier + j],
+                   _dy = userdata->dy[i * barrier + j],
+                   _dz = userdata->dz[i * barrier + j];
+        debug_type _dist3 = userdata->dist3[i * barrier + j];
+
+        debug_type k_dx = _dx * _dist3;
+        debug_type k_dy = _dy * _dist3;
+        debug_type k_dz = _dz * _dist3;
+        userdata->fx[i] += userdata->masses[j] * k_dx;
+        userdata->fy[i] += userdata->masses[j] * k_dy;
+        userdata->fz[i] += userdata->masses[j] * k_dz;
+        userdata->fx[j] -= userdata->masses[i] * k_dx;
+        userdata->fy[j] -= userdata->masses[i] * k_dy;
+        userdata->fz[j] -= userdata->masses[i] * k_dz;
+
+        // f[6 * i + 3] += ABMD_DOUBLE(userdata->masses[j] * k_dx);
+        // f[6 * i + 4] += ABMD_DOUBLE(userdata->masses[j] * k_dy);
+        // f[6 * i + 5] += ABMD_DOUBLE(userdata->masses[j] * k_dz);
+        // f[6 * j + 3] -= ABMD_DOUBLE(userdata->masses[i] * k_dx);
+        // f[6 * j + 4] -= ABMD_DOUBLE(userdata->masses[i] * k_dy);
+        // f[6 * j + 5] -= ABMD_DOUBLE(userdata->masses[i] * k_dz);
+      }
     }
+  }
+
+  for (int i = 0; i < barrier; i++)
+  {
+    f[6 * i + 3] += userdata->fx[i];
+    f[6 * i + 4] += userdata->fy[i];
+    f[6 * i + 5] += userdata->fz[i];
   }
 
   // Recover state of geocentric Moon and convert acceleration
