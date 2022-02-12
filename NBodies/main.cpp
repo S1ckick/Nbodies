@@ -27,10 +27,6 @@ using namespace std;
 // using current_type = double;
 
 int main() {
-#ifdef NUMBER_DOUBLE_DOUBLE
-  unsigned int oldcw;
-  fpu_fix_start(&oldcw);
-#endif
   std::ifstream infile("../NBodies/points.txt");
   long double x, y, z, vx, vy, vz, m;
   std::vector<current_type> rr;
@@ -56,7 +52,7 @@ int main() {
 
   /// for energy fix need change moon center
   std::vector<current_type> moon_res(6, 0);
-  moonToGeocentric(rr.data(), moon_res.data());
+  //moonToGeocentric(rr.data(), moon_res.data());
 
   current_type total_mass = 0;
   for (int i = 0; i < masses.size(); i++) {
@@ -87,14 +83,14 @@ int main() {
   init_vel_mass[1] /= total_mass;
   init_vel_mass[2] /= total_mass;
 
-  for (int i = 0; i < masses.size(); i++) {
-    rr[i * 6] -= init_center_mass[0];
-    rr[i * 6 + 1] -= init_center_mass[1];
-    rr[i * 6 + 2] -= init_center_mass[2];
-    rr[i * 6 + 3] -= init_vel_mass[0];
-    rr[i * 6 + 4] -= init_vel_mass[1];
-    rr[i * 6 + 5] -= init_vel_mass[2];
-  }
+  // for (int i = 0; i < masses.size(); i++) {
+  //   rr[i * 6] -= init_center_mass[0];
+  //   rr[i * 6 + 1] -= init_center_mass[1];
+  //   rr[i * 6 + 2] -= init_center_mass[2];
+  //   rr[i * 6 + 3] -= init_vel_mass[0];
+  //   rr[i * 6 + 4] -= init_vel_mass[1];
+  //   rr[i * 6 + 5] -= init_vel_mass[2];
+  // }
 
   current_type init_energy = 0;
   current_type init_k_energy = 0;
@@ -129,12 +125,12 @@ int main() {
     init_impulse_moment[2] += rr[i * 6] * temp_y - rr[i * 6 + 1] * temp_x;
   }
 
-  rr[moonNum * 6] = moon_res[0];
-  rr[moonNum * 6 + 1] = moon_res[1];
-  rr[moonNum * 6 + 2] = moon_res[2];
-  rr[moonNum * 6 + 3] = moon_res[3];
-  rr[moonNum * 6 + 4] = moon_res[4];
-  rr[moonNum * 6 + 5] = moon_res[5];
+  // rr[moonNum * 6] = moon_res[0];
+  // rr[moonNum * 6 + 1] = moon_res[1];
+  // rr[moonNum * 6 + 2] = moon_res[2];
+  // rr[moonNum * 6 + 3] = moon_res[3];
+  // rr[moonNum * 6 + 4] = moon_res[4];
+  // rr[moonNum * 6 + 5] = moon_res[5];
 
   double h = 0.03125;
   auto start = std::chrono::high_resolution_clock::now();
@@ -146,108 +142,10 @@ int main() {
   ABMD_calc_diff(rr, masses, h, t, init_energy, init_impulse_moment.data(),
                  init_center_mass.data(), diff);
 
-  /*
-    for (int i = 0; i < iterations; i++) {
-      RungeKutta4(rr, masses, h);
-
-      for (int j = 0; j < masses.size(); j++) {
-        data_bodies[3 * (j + masses.size() * i)] = rr[j * 6];
-        data_bodies[1 + 3 * (j + masses.size() * i)] = rr[j * 6 + 1];
-        data_bodies[2 + 3 * (j + masses.size() * i)] = rr[j * 6 + 2];
-      }
-
-      /// for energy fix need change moon center
-      std::vector<current_type> moon_res_i(6, 0);
-      moonToGeocentric(rr, moon_res_i);
-
-      //------------center mass-------------
-
-      std::vector<current_type> center_mass(3, 0);
-
-      for (int t = 0; t < masses.size(); t++) {
-        center_mass[0] += rr[t * 6] * masses[t];
-        center_mass[1] += rr[t * 6 + 1] * masses[t];
-        center_mass[2] += rr[t * 6 + 2] * masses[t];
-      }
-
-      center_mass[0] /= total_mass;
-      center_mass[1] /= total_mass;
-      center_mass[2] /= total_mass;
-      //----------END center mass-------------
-
-      //--------------energy-------------------
-      current_type energy = 0;
-      current_type k_energy = 0;
-      for (int t = 0; t < masses.size(); t++) {
-        k_energy +=
-            masses[t] *
-            (rr[t * 6 + 3] * rr[t * 6 + 3] + rr[t * 6 + 4] * rr[t * 6 + 4] +
-             rr[t * 6 + 5] * rr[t * 6 + 5]) /
-            2.0;
-      }
-      current_type p_energy = 0;
-      for (int t = 0; t < masses.size(); t++) {
-        for (int j = t + 1; j < masses.size(); j++) {
-          p_energy +=
-              masses[t] * masses[j] /
-              std::sqrt((rr[t * 6] - rr[j * 6]) * (rr[t * 6] - rr[j * 6]) +
-                        (rr[t * 6 + 1] - rr[j * 6 + 1]) *
-                            (rr[t * 6 + 1] - rr[j * 6 + 1]) +
-                        (rr[t * 6 + 2] - rr[j * 6 + 2]) *
-                            (rr[t * 6 + 2] - rr[j * 6 + 2]));
-        }
-      }
-      energy = k_energy - p_energy;
-      //--------END energy---------------------
-
-      //-----------impulse moment---------------
-      std::vector<current_type> impulse_moment(3, 0);
-      for (int t = 0; t < masses.size(); t++) {
-        current_type temp_x = rr[t * 6 + 3] * masses[t];
-        current_type temp_y = rr[t * 6 + 4] * masses[t];
-        current_type temp_z = rr[t * 6 + 5] * masses[t];
-
-        impulse_moment[0] += rr[t * 6 + 1] * temp_z - rr[t * 6 + 2] * temp_y;
-        impulse_moment[1] += rr[t * 6 + 2] * temp_x - rr[t * 6] * temp_z;
-        impulse_moment[2] += rr[t * 6] * temp_y - rr[t * 6 + 1] * temp_x;
-      }
-      //--------------END impulse moment-----------
-
-      data_energy[i] = (abs((energy - init_energy) / init_energy));
-
-      data_impulse_moment[i] =
-          std::sqrt((impulse_moment[0] - init_impulse_moment[0]) *
-                        (impulse_moment[0] - init_impulse_moment[0]) +
-                    (impulse_moment[1] - init_impulse_moment[1]) *
-                        (impulse_moment[1] - init_impulse_moment[1]) +
-                    (impulse_moment[2] - init_impulse_moment[2]) *
-                        (impulse_moment[2] - init_impulse_moment[2])) /
-          (init_impulse_moment[0] * init_impulse_moment[0] +
-           init_impulse_moment[1] * init_impulse_moment[1] +
-           init_impulse_moment[2] * init_impulse_moment[2]);
-
-      data_center[i] = std::sqrt((init_center_mass[0] - center_mass[0]) *
-                                     (init_center_mass[0] - center_mass[0]) +
-                                 (init_center_mass[1] - center_mass[1]) *
-                                     (init_center_mass[1] - center_mass[1]) +
-                                 (init_center_mass[2] - center_mass[2]) *
-                                     (init_center_mass[2] - center_mass[2]));
-
-      rr[moonNum * 6] = moon_res_i[0];
-      rr[moonNum * 6 + 1] = moon_res_i[1];
-      rr[moonNum * 6 + 2] = moon_res_i[2];
-      rr[moonNum * 6 + 3] = moon_res_i[3];
-      rr[moonNum * 6 + 4] = moon_res_i[4];
-      rr[moonNum * 6 + 5] = moon_res_i[5];
-    }
-    */
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration =
       std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
   std::cout << "time: " << duration.count() << " microseconds \n";
 
-#ifdef NUMBER_DOUBLE_DOUBLE
-  fpu_fix_end(&oldcw);
-#endif
   return 0;
 }
