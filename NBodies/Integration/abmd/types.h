@@ -103,8 +103,8 @@ struct Queue {
   ABMD_DOUBLE *_array;
   ABMD_DOUBLE **xarray, **dxarray;
   ABMD_DOUBLE *x_backup;
-  ABMD_DOUBLE *diffs_r;
-  ABMD_DOUBLE *diffs_w;
+  double *diffs_r;
+  double *diffs_w;
   ABMD_DOUBLE *last_diff;
   int delays_poly_degree;
   int pointsave_poly_degree;
@@ -133,8 +133,8 @@ struct Queue {
       dxarray[i] = &this->_array[i * block_size + dim];
     }
 
-    diffs_r = (ABMD_DOUBLE *)malloc((capacity - 1) * dim * sizeof(ABMD_DOUBLE));
-    diffs_w = (ABMD_DOUBLE *)malloc((capacity - 1) * dim * sizeof(ABMD_DOUBLE));
+    diffs_r = (double *)malloc((capacity - 1) * dim * sizeof(double));
+    diffs_w = (double *)malloc((capacity - 1) * dim * sizeof(double));
     last_diff = (ABMD_DOUBLE *)malloc(dim * sizeof(ABMD_DOUBLE));
     delays_poly_degree = capacity - 1;
     pointsave_poly_degree = capacity - 1;
@@ -356,14 +356,14 @@ struct Queue {
     return dxarray[tail];
   }
 
-  ABMD_DOUBLE *get_diffs_r() { return diffs_r; }
+  double *get_diffs_r() { return diffs_r; }
 
-  ABMD_DOUBLE *get_diffs_w() { return diffs_w; }
+  double *get_diffs_w() { return diffs_w; }
 
   ABMD_DOUBLE *get_last_diff() { return last_diff; }
 
   void swap_diffs() {
-    ABMD_DOUBLE *diffs_r = this->diffs_r;
+    double *diffs_r = this->diffs_r;
     this->diffs_r = this->diffs_w;
     this->diffs_w = diffs_r;
   }
@@ -374,12 +374,12 @@ struct Queue {
     int dim = this->dim;
 
     ABMD_DOUBLE *right = peek_right_dx();
-    ABMD_DOUBLE *diffs_r = this->diffs_r;
-    ABMD_DOUBLE *diffs_w = this->diffs_w;
+    double *diffs_r = this->diffs_r;
+    double *diffs_w = this->diffs_w;
 
     if (!is_full()) {
       for (int i = 0; i < dim; i++) {
-        ABMD_DOUBLE new_d = *right++;
+        double new_d = to_double(right[i]);
         for (int j = 0; j < size - 1; j++) {
           *diffs_w++ = new_d;
           new_d -= *diffs_r++;
@@ -394,7 +394,7 @@ struct Queue {
     ABMD_DOUBLE *last_diff_1 = last_diff;
 
     for (int i = 0; i < dim; i++) {
-      ABMD_DOUBLE new_d = *right++;
+      double new_d = to_double(right[i]);
       for (int j = 0; j < size - 1; j++) {
         *diffs_w++ = new_d;
         new_d -= *diffs_r++;

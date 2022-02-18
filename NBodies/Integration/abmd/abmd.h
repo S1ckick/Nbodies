@@ -96,10 +96,10 @@ struct ABMData {
 
     memset(out, 0, sizeof(ABMD_DOUBLE) * dim);
 
-    ABMD_DOUBLE *diffs = queue->get_diffs_r();
+    double *diffs = queue->get_diffs_r();
     for (int i = 0; i < dim; i++) {
       for (int j = 0; j < abm_order; j++) {
-        out[i] += to_double(diffs[i*abm_order + j]) * this->hoho[j];
+        out[i] += diffs[i*abm_order + j] * this->hoho[j];
       }
       out[i] += prev[i];
     }
