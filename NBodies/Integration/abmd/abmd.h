@@ -569,10 +569,10 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
 */
 
 
-  // for (int i = 0; i < dim; i++) {
-  //   abm_test->f << " " << std::setprecision(30)
-  //               << state[i]; 
-  // }
+  for (int i = 0; i < dim; i++) {
+    abm_test->f << " " << std::setprecision(30)
+                << state[i]; 
+  }
   
   
   /*
@@ -581,7 +581,7 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
    abm_test->f << " " << to_double(abm_test->center[abm_test->i]);
    */
   abm_test->i++;
-  // abm_test->f << "\n";
+  abm_test->f << "\n";
   t[0] += 1 / 32.0;
 
   return 1;
@@ -679,24 +679,24 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_run(abm);
   abmd_destroy(abm);
 
-  // for (int i = 0, j = sol_size - 1; i < sol_size; i++, j--) {
-  //   ABMD_DOUBLE x1 = sol[i * dim + 6 * 10];
-  //   ABMD_DOUBLE x2 = sol_back[j * dim + 6 * 10];
+  for (int i = 0, j = sol_size - 1; i < sol_size; i++, j--) {
+    ABMD_DOUBLE x1 = sol[i * dim + 6 * 10];
+    ABMD_DOUBLE x2 = sol_back[j * dim + 6 * 10];
 
-  //   ABMD_DOUBLE y1 = sol[i * dim + 6 * 10 + 2];
-  //   ABMD_DOUBLE y2 = sol_back[j * dim + 6 * 10 + 2];
+    ABMD_DOUBLE y1 = sol[i * dim + 6 * 10 + 2];
+    ABMD_DOUBLE y2 = sol_back[j * dim + 6 * 10 + 2];
 
-  //   ABMD_DOUBLE z1 = sol[i * dim + 6 * 10 + 4];
-  //   ABMD_DOUBLE z2 = sol_back[j * dim + 6 * 10 + 4];
+    ABMD_DOUBLE z1 = sol[i * dim + 6 * 10 + 4];
+    ABMD_DOUBLE z2 = sol_back[j * dim + 6 * 10 + 4];
 
-  //   diff[i] = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
-  // }
+    diff[i] = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
+  }
 
-  // std::ofstream diff_file = std::ofstream("Mars_diff.txt");
+  std::ofstream diff_file = std::ofstream("Mars_diff.txt");
 
-  // for (int i = 0; i < sol_size; i++) {
-  //   diff_file << " " << std::setprecision(30) << diff[i] << std::endl;
-  // }
+  for (int i = 0; i < sol_size; i++) {
+    diff_file << " " << std::setprecision(30) << diff[i] << std::endl;
+  }
   
 
   free(data_energy);

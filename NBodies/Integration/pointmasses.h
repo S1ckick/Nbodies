@@ -11,7 +11,7 @@ long double to_double(const long double &x)
   return x;
 }
 
-using debug_type =  double;
+using debug_type = double;
 
 template <typename Type>
 class ObjectsData
@@ -74,9 +74,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   //userdata()
   // Copy velocities of bodies
   ObjectsData<ABMD_DOUBLE> *userdata = static_cast<ContextData<ABMD_DOUBLE> *>(context)->objects;
-  memset(&userdata->fx[0], sizeof(debug_type) * userdata->n_objects, 0);
-  memset(&userdata->fy[0], sizeof(debug_type) * userdata->n_objects, 0);
-  memset(&userdata->fz[0], sizeof(debug_type) * userdata->n_objects, 0);
+  memset(&userdata->fx[0], 0, sizeof(debug_type) * userdata->n_objects);
+  memset(&userdata->fy[0], 0, sizeof(debug_type) * userdata->n_objects);
+  memset(&userdata->fz[0], 0, sizeof(debug_type) * userdata->n_objects);
   for (i = 0; i < userdata->n_objects; i++)
   {
     f[6 * i] = x[6 * i + 3];
@@ -113,9 +113,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
       if (i == 3 && j == 10)
       {
-        _dx_me = x[6 * j] - x[6 * i];
-        _dy_me = x[6 * j + 1] - x[6 * i + 1];
-        _dz_me = x[6 * j + 2] - x[6 * i + 2];
+        _dx_me = gcmoon_x;
+        _dy_me = gcmoon_y;
+        _dz_me = gcmoon_z;
         _dist2_me = 1.0 / (_dx_me * _dx_me + _dy_me * _dy_me + _dz_me * _dz_me);
         _dist_me = sqrt(_dist2_me);
         _dist3_me = _dist_me * _dist2_me;
@@ -178,6 +178,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         debug_type k_dx = _dx * _dist3;
         debug_type k_dy = _dy * _dist3;
         debug_type k_dz = _dz * _dist3;
+        
         userdata->fx[i] += userdata->masses[j] * k_dx;
         userdata->fy[i] += userdata->masses[j] * k_dy;
         userdata->fz[i] += userdata->masses[j] * k_dz;
@@ -197,9 +198,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
   for (int i = 0; i < barrier; i++)
   {
-    f[6 * i + 3] += userdata->fx[i];
-    f[6 * i + 4] += userdata->fy[i];
-    f[6 * i + 5] += userdata->fz[i];
+    f[6 * i + 3] = userdata->fx[i];
+    f[6 * i + 4] = userdata->fy[i];
+    f[6 * i + 5] = userdata->fz[i];
   }
 
   // Recover state of geocentric Moon and convert acceleration
