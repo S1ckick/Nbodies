@@ -6,28 +6,57 @@
 
 #include "../pointmasses.h"
 #include "abmd_rk.h"
+#include <qd/dd_real.h>
+
+
 
 template <typename ABMD_DOUBLE>
-ABMD_DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
-    ABMD_DOUBLE(1.0),
-    ABMD_DOUBLE(1.0) / ABMD_DOUBLE(2.0),
-    ABMD_DOUBLE(5.0) / ABMD_DOUBLE(12.0),
-    ABMD_DOUBLE(3.0) / ABMD_DOUBLE(8.0),
-    ABMD_DOUBLE(251.0) / ABMD_DOUBLE(720.0),
-    ABMD_DOUBLE(95.0) / ABMD_DOUBLE(288.0),
-    ABMD_DOUBLE(19087.0) / ABMD_DOUBLE(60480.0),
-    ABMD_DOUBLE(5257.0) / ABMD_DOUBLE(17280.0),
-    ABMD_DOUBLE(1070017.0) / ABMD_DOUBLE(3628800.0),
-    ABMD_DOUBLE(25713.0) / ABMD_DOUBLE(89600.0),
-    ABMD_DOUBLE(26842253.0) / ABMD_DOUBLE(95800320.0),
-    ABMD_DOUBLE(4777223.0) / ABMD_DOUBLE(17418240.0),
-    ABMD_DOUBLE(703604254357.0) / ABMD_DOUBLE(2615348736000.0),
-    ABMD_DOUBLE(106364763817.0) / ABMD_DOUBLE(402361344000.0),
-    ABMD_DOUBLE(1166309819657.0) / ABMD_DOUBLE(4483454976000.0),
-    ABMD_DOUBLE(2.5221445e7) / ABMD_DOUBLE(9.8402304e7),
-    ABMD_DOUBLE(8.092989203533249e15) / ABMD_DOUBLE(3.201186852864e16),
-    ABMD_DOUBLE(8.5455477715379e13) / ABMD_DOUBLE(3.4237292544e14),
-    ABMD_DOUBLE(1.2600467236042756559e19) / ABMD_DOUBLE(5.109094217170944e19)};
+class coefss{
+public:
+static ABMD_DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER];
+};
+
+template<> dd_real coefss<dd_real>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
+    dd_real(1.0),
+    dd_real(1.0) / dd_real(2.0),
+    dd_real(5.0) / dd_real(12.0),
+    dd_real(3.0) / dd_real(8.0),
+    dd_real(251.0) / dd_real(720.0),
+    dd_real(95.0) / dd_real(288.0),
+    dd_real(19087.0) / dd_real(60480.0),
+    dd_real(5257.0) / dd_real(17280.0),
+    dd_real(1070017.0) / dd_real(3628800.0),
+    dd_real(25713.0) / dd_real(89600.0),
+    dd_real(26842253.0) / dd_real(95800320.0),
+    dd_real(4777223.0) / dd_real(17418240.0),
+    dd_real(703604254357.0) / dd_real(2615348736000.0),
+    dd_real(106364763817.0) / dd_real(402361344000.0),
+    dd_real(1166309819657.0) / dd_real(4483454976000.0),
+    dd_real(2.5221445e7) / dd_real(9.8402304e7),
+    dd_real(8.092989203533249e15) / dd_real(3.201186852864e16),
+    dd_real(8.5455477715379e13) / dd_real(3.4237292544e14),
+    dd_real(1.2600467236042756559e19) / dd_real(5.109094217170944e19)};
+
+    template<> long double coefss<long double>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
+    (long double)(1.0),
+    (long double)(1.0) / (long double)(2.0),
+    (long double)(5.0) / (long double)(12.0),
+    (long double)(3.0) / (long double)(8.0),
+    (long double)(251.0) / (long double)(720.0),
+    (long double)(95.0) / (long double)(288.0),
+    (long double)(19087.0) / (long double)(60480.0),
+    (long double)(5257.0) / (long double)(17280.0),
+    (long double)(1070017.0) / (long double)(3628800.0),
+    (long double)(25713.0) / (long double)(89600.0),
+    (long double)(26842253.0) / (long double)(95800320.0),
+    (long double)(4777223.0) / (long double)(17418240.0),
+    (long double)(703604254357.0) / (long double)(2615348736000.0),
+    (long double)(106364763817.0) / (long double)(402361344000.0),
+    (long double)(1166309819657.0) / (long double)(4483454976000.0),
+    (long double)(2.5221445e7) / (long double)(9.8402304e7),
+    (long double)(8.092989203533249e15) / (long double)(3.201186852864e16),
+    (long double)(8.5455477715379e13) / (long double)(3.4237292544e14),
+    (long double)(1.2600467236042756559e19) / (long double)(5.109094217170944e19)};
 
 /********** ABMD method **********/
 template <typename ABMD_DOUBLE>
@@ -42,6 +71,7 @@ struct ABMData {
   ABMD_DOUBLE *dxs_delayed;
   ABMD_DOUBLE *rk_memory;
   ABMD_DOUBLE *inner_rk_memory;
+  ABMD_DOUBLE *hoho;
 
   ABMData(){};
   ~ABMData() {
@@ -68,10 +98,8 @@ struct ABMData {
 
     ABMD_DOUBLE *diffs = queue->get_diffs_r();
     for (int i = 0; i < dim; i++) {
-      ABMD_DOUBLE *c = PREDICTOR_COEFFS<ABMD_DOUBLE>;
       for (int j = 0; j < abm_order; j++) {
-        ABMD_DOUBLE ch = *c++ * h;
-        out[i] += *diffs++ * ch;
+        out[i] += to_double(diffs[i*abm_order + j]) * this->hoho[j];
       }
       out[i] += prev[i];
     }
@@ -87,7 +115,7 @@ struct ABMData {
     if (x_predicted == NULL) x_predicted = out;
 
     ABMD_DOUBLE *diff = queue->get_last_diff();
-    ABMD_DOUBLE ch = h * PREDICTOR_COEFFS<ABMD_DOUBLE>[abm_order];
+    ABMD_DOUBLE ch = h * coefss<ABMD_DOUBLE>::PREDICTOR_COEFFS[abm_order];
     for (int k = 0; k < dim; k++) {
       out[k] = x_predicted[k] + ch * diff[k];
     }
@@ -307,6 +335,11 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
 
   ABMData<ABMD_DOUBLE> abm_data;
 
+  ABMD_DOUBLE *hoho = (ABMD_DOUBLE*)malloc(sizeof(ABMD_DOUBLE) * ABMD_MAX_ORDER);
+  for(int i = 0; i < ABMD_MAX_ORDER; i++){
+    hoho[i] = coefss<ABMD_DOUBLE>::PREDICTOR_COEFFS[i] * h;
+  }
+
   abm_data.input = *abm;
   abm_data.rk4_h = rk4_h;
   abm_data.temp = rhs_temp;
@@ -317,6 +350,7 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
   abm_data.dxs_delayed = dxs_delayed;
   abm_data.rk_memory = NULL;
   abm_data.inner_rk_memory = NULL;
+  abm_data.hoho = &hoho[0];
 
   // Setting initial conditions for RK4 solution
   for (int i = 0; i < dim; i++) {
@@ -421,12 +455,24 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
       run_callback = abm->callback(callback_t, callback_state_l, abm->context);
     }
     auto st11 = std::chrono::high_resolution_clock::now();
+/*
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st2 - st1).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st3 - st2).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st4 - st3).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st5 - st4).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st6 - st5).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st7 - st6).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st8 - st7).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st9 - st8).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st10 - st9).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(st11 - st10).count() << std::endl;
+  */
   }
 
   for (int i = 0; i < dim; i++) {
     abm->final_state[i] = (ABMD_DOUBLE)queue->peek_right_x()[i];
   }
-
+  
   // destroy_abm_data(abm_data);
   // free(callback_state);
   free(callback_state_l);
@@ -569,10 +615,10 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
 */
 
 
-  for (int i = 0; i < dim; i++) {
-    abm_test->f << " " << std::setprecision(30)
-                << state[i]; 
-  }
+  // for (int i = 0; i < dim; i++) {
+  //   abm_test->f << " " << std::setprecision(30)
+  //               << state[i]; 
+  // }
   
   
   /*
@@ -581,7 +627,7 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
    abm_test->f << " " << to_double(abm_test->center[abm_test->i]);
    */
   abm_test->i++;
-  abm_test->f << "\n";
+  // abm_test->f << "\n";
   t[0] += 1 / 32.0;
 
   return 1;
@@ -679,15 +725,17 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_run(abm);
   abmd_destroy(abm);
 
+  
+
   for (int i = 0, j = sol_size - 1; i < sol_size; i++, j--) {
-    ABMD_DOUBLE x1 = sol[i * dim + 6 * 10];
-    ABMD_DOUBLE x2 = sol_back[j * dim + 6 * 10];
+    ABMD_DOUBLE x1 = sol[i * dim + 6 * 4];
+    ABMD_DOUBLE x2 = sol_back[j * dim + 6 * 4];
 
-    ABMD_DOUBLE y1 = sol[i * dim + 6 * 10 + 2];
-    ABMD_DOUBLE y2 = sol_back[j * dim + 6 * 10 + 2];
+    ABMD_DOUBLE y1 = sol[i * dim + 6 * 4 + 2];
+    ABMD_DOUBLE y2 = sol_back[j * dim + 6 * 4 + 2];
 
-    ABMD_DOUBLE z1 = sol[i * dim + 6 * 10 + 4];
-    ABMD_DOUBLE z2 = sol_back[j * dim + 6 * 10 + 4];
+    ABMD_DOUBLE z1 = sol[i * dim + 6 * 4 + 4];
+    ABMD_DOUBLE z2 = sol_back[j * dim + 6 * 4 + 4];
 
     diff[i] = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
   }
