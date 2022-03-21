@@ -150,16 +150,16 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     {
       if (i == 3 && j == 10)
       {
-        ABMD_DOUBLE k_dx = _dx_me * _dist3_me;
-        ABMD_DOUBLE k_dy = _dy_me * _dist3_me;
-        ABMD_DOUBLE k_dz = _dz_me * _dist3_me;
+        // ABMD_DOUBLE k_dx = _dx_me * _dist3_me;
+        // ABMD_DOUBLE k_dy = _dy_me * _dist3_me;
+        // ABMD_DOUBLE k_dz = _dz_me * _dist3_me;
 
-        userdata->fx[i] += to_double(userdata->masses[j] * k_dx);
-        userdata->fy[i] += to_double(userdata->masses[j] * k_dy);
-        userdata->fz[i] += to_double(userdata->masses[j] * k_dz);
-        userdata->fx[j] -= to_double(userdata->masses[i] * k_dx);
-        userdata->fy[j] -= to_double(userdata->masses[i] * k_dy);
-        userdata->fz[j] -= to_double(userdata->masses[i] * k_dz);
+        // userdata->fx[i] += to_double(userdata->masses[j] * k_dx);
+        // userdata->fy[i] += to_double(userdata->masses[j] * k_dy);
+        // userdata->fz[i] += to_double(userdata->masses[j] * k_dz);
+        // userdata->fx[j] -= to_double(userdata->masses[i] * k_dx);
+        // userdata->fy[j] -= to_double(userdata->masses[i] * k_dy);
+        // userdata->fz[j] -= to_double(userdata->masses[i] * k_dz);
 
         // f[6 * i + 3] += userdata->masses[j] * k_dx;
         // f[6 * i + 4] += userdata->masses[j] * k_dy;
@@ -214,6 +214,17 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   f[6 * moonNum + 3] -= f[6 * earthNum + 3];
   f[6 * moonNum + 4] -= f[6 * earthNum + 4];
   f[6 * moonNum + 5] -= f[6 * earthNum + 5];
+
+  ABMD_DOUBLE k_dx = _dx_me * _dist3_me;
+  ABMD_DOUBLE k_dy = _dy_me * _dist3_me;
+  ABMD_DOUBLE k_dz = _dz_me * _dist3_me;
+
+  f[6 * earthNum + 3] += to_double(userdata->masses[moonNum] * k_dx);
+  f[6 * earthNum + 4] += to_double(userdata->masses[moonNum] * k_dy);
+  f[6 * earthNum + 5] += to_double(userdata->masses[moonNum] * k_dz);
+  f[6 * moonNum + 3] -= to_double((userdata->masses[earthNum]+userdata->masses[moonNum]) * k_dx);
+  f[6 * moonNum + 4] -= to_double((userdata->masses[earthNum]+userdata->masses[moonNum]) * k_dy);
+  f[6 * moonNum + 5] -= to_double((userdata->masses[earthNum]+userdata->masses[moonNum]) * k_dz);
 
   for (i = 0; i < userdata->n_objects; i++)
   {
