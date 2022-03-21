@@ -42,7 +42,7 @@ public:
   int n_objects;
   std::vector<debug_type> dx, dy, dz;
   std::vector<debug_type> dist, dist2, dist3;
-  std::vector<Type> temp_acc;
+  std::vector<debug_type> temp_acc;
   std::vector<debug_type> fx, fy, fz;
 };
 #define NO_RELATIVITY
@@ -119,6 +119,14 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         _dist2_me = 1.0 / (_dx_me * _dx_me + _dy_me * _dy_me + _dz_me * _dz_me);
         _dist_me = sqrt(_dist2_me);
         _dist3_me = _dist_me * _dist2_me;
+
+        userdata->dx[i * barrier + j] = to_double(_dx_me);
+        userdata->dy[i * barrier + j] = to_double(_dy_me);
+        userdata->dz[i * barrier + j] = to_double(_dz_me);
+
+        userdata->dx[j * barrier + i] = -to_double(_dx_me);
+        userdata->dy[j * barrier + i] = -to_double(_dy_me);
+        userdata->dz[j * barrier + i] = -to_double(_dz_me);
       }
       else
       {
@@ -136,8 +144,12 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         userdata->dy[j * barrier + i] = -_dy;
         userdata->dz[j * barrier + i] = -_dz;
 
+        userdata->dist[i * barrier + j] = _dist;
+        userdata->dist2[i * barrier + j] = _dist2;
         userdata->dist3[i * barrier + j] = _dist3;
 
+        userdata->dist[j * barrier + i] = _dist;
+        userdata->dist2[j * barrier + i] = _dist2;
         userdata->dist3[j * barrier + i] = _dist3;
       }
     }
@@ -178,7 +190,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         debug_type k_dx = _dx * _dist3;
         debug_type k_dy = _dy * _dist3;
         debug_type k_dz = _dz * _dist3;
-        
+
         userdata->fx[i] += userdata->masses[j] * k_dx;
         userdata->fy[i] += userdata->masses[j] * k_dy;
         userdata->fz[i] += userdata->masses[j] * k_dz;
@@ -222,9 +234,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   f[6 * earthNum + 3] += to_double(userdata->masses[moonNum] * k_dx);
   f[6 * earthNum + 4] += to_double(userdata->masses[moonNum] * k_dy);
   f[6 * earthNum + 5] += to_double(userdata->masses[moonNum] * k_dz);
-  f[6 * moonNum + 3] -= to_double((userdata->masses[earthNum]+userdata->masses[moonNum]) * k_dx);
-  f[6 * moonNum + 4] -= to_double((userdata->masses[earthNum]+userdata->masses[moonNum]) * k_dy);
-  f[6 * moonNum + 5] -= to_double((userdata->masses[earthNum]+userdata->masses[moonNum]) * k_dz);
+  f[6 * moonNum + 3] -= to_double((userdata->masses[earthNum] + userdata->masses[moonNum]) * k_dx);
+  f[6 * moonNum + 4] -= to_double((userdata->masses[earthNum] + userdata->masses[moonNum]) * k_dy);
+  f[6 * moonNum + 5] -= to_double((userdata->masses[earthNum] + userdata->masses[moonNum]) * k_dz);
 
   for (i = 0; i < userdata->n_objects; i++)
   {
@@ -236,5 +248,93 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     f[6 * i + 3] = to_double(f[6 * i + 3]);
     f[6 * i + 4] = to_double(f[6 * i + 4]);
     f[6 * i + 5] = to_double(f[6 * i + 5]);
+  }
+
+  double revLS2 = pow(1731456.84 / 299792458, 2);
+  // RELATIVISTIC
+  for (i = 0; i < barrier; ++i)
+  {
+    // луна должна быть в барицентре прибавить ускорение земли если луна
+    userdata->temp_acc[3 * i] = to_double(f[6 * i + 3]);
+    userdata->temp_acc[3 * i + 1] = to_double(f[6 * i + 4]);
+    userdata->temp_acc[3 * i + 2] = to_double(f[6 * i + 5]);
+
+    if (i == 10)
+    {
+      userdata->temp_acc[3 * i] += to_double(f[6 * 3 + 3]);
+      userdata->temp_acc[3 * i + 1] += to_double(f[6 * 3 + 4]);
+      userdata->temp_acc[3 * i + 2] += to_double(f[6 * 3 + 5]);
+    }
+  }
+
+  for (i = 0; i < barrier; ++i)
+  {
+    double vi_sqr = to_double(x[6 * i + 3]) * to_double(x[6 * i + 3]) +
+                    to_double(x[6 * i + 4]) * to_double(x[6 * i + 4]) +
+                    to_double(x[6 * i + 5]) * to_double(x[6 * i + 5]);
+
+    double sum_i = 0.0;
+    for (k = 0; k < barrier; ++k)
+    {
+      if (i == k)
+        continue;
+      sum_i += userdata->masses[k] * userdata->dist[barrier * i + k];
+    }
+
+    for (j = 0; j < barrier; ++j)
+    {
+      if (i == j)
+        continue;
+
+      int ij = barrier * i + j;
+
+      double vj_sqr = to_double(x[6 * j + 3]) * to_double(x[6 * j + 3]) +
+                    to_double(x[6 * j + 4]) * to_double(x[6 * j + 4]) +
+                    to_double(x[6 * j + 5]) * to_double(x[6 * j + 5]);
+
+      double vi_dot_vj = to_double(x[6 * i + 3]) * to_double(x[6 * j + 3]) +
+                    to_double(x[6 * i + 4]) * to_double(x[6 * j + 4]) +
+                    to_double(x[6 * i + 5]) * to_double(x[6 * j + 5]);
+
+      double sum_j = 0.0;
+      for (k = 0; k < barrier; ++k)
+      {
+        if (j == k)
+          continue;
+        sum_j += userdata->masses[k] * userdata->dist[barrier * j + k];
+      }
+
+      double t1 = -4.0 * sum_i - sum_j + vi_sqr + 2.0 * vj_sqr - 4.0 * vi_dot_vj;
+      double t2 = userdata->dist[ij] * (-userdata->dx[ij] * to_double(x[6 * j + 3]) +
+                                        -userdata->dy[ij] * to_double(x[6 * j + 4]) +
+                                        -userdata->dz[ij] * to_double(x[6 * j + 5]));
+      t2 = -1.5 * t2 * t2;
+      double t3 = 0.5 * (userdata->dx[ij] * userdata->temp_acc[3 * j] +
+                         userdata->dy[ij] * userdata->temp_acc[3 * j + 1] +
+                         userdata->dz[ij] * userdata->temp_acc[3 * j + 2]);
+
+      double c1 = revLS2 * userdata->masses[j] * userdata->dist3[ij] * (t1 + t2 + t3);
+      f[6 * i + 3] += userdata->dx[ij] * c1;
+      f[6 * i + 4] += userdata->dy[ij] * c1;
+      f[6 * i + 5] += userdata->dz[ij] * c1;
+
+      double p1 = userdata->dist[ij] * (-userdata->dx[ij] * (4 * to_double(x[6 * i + 3]) - 3 * to_double(x[6 * j + 3])) +
+                                        -userdata->dy[ij] * (4 * to_double(x[6 * i + 4]) - 3 * to_double(x[6 * j + 4])) +
+                                        -userdata->dz[ij] * (4 * to_double(x[6 * i + 5]) - 3 * to_double(x[6 * j + 5])));
+
+      double c2 = revLS2 * userdata->masses[j] * userdata->dist2[ij] * p1;
+
+      double dv_x = to_double(x[6 * i + 3] - x[6 * j + 3]);
+      double dv_y = to_double(x[6 * i + 4] - x[6 * j + 4]);
+      double dv_z = to_double(x[6 * i + 5] - x[6 * j + 5]);
+      f[6 * i + 3] += dv_x * c2;
+      f[6 * i + 4] += dv_y * c2;
+      f[6 * i + 5] += dv_z * c2;
+
+      double c3 = 3.5 * revLS2 * userdata->masses[j] * userdata->dist[ij];
+      f[6 * i + 3] += userdata->temp_acc[3 * j] * c3;
+      f[6 * i + 4] += userdata->temp_acc[3 * j + 1] * c3;
+      f[6 * i + 5] += userdata->temp_acc[3 * j + 2] * c3;
+    }
   }
 }
