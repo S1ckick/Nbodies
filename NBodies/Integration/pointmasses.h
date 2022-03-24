@@ -2,16 +2,15 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
-const int earthNum = 3;
-const int moonNum = 10;
-const int barrier = 16;
+
+#include "../def.h"
 
 long double to_double(const long double &x)
 {
   return x;
 }
 
-using debug_type = double;
+using helper_type = double;
 
 template <typename Type>
 class ObjectsData
@@ -40,10 +39,10 @@ public:
 
   std::vector<double> masses;
   int n_objects;
-  std::vector<debug_type> dx, dy, dz;
-  std::vector<debug_type> dist, dist2, dist3;
-  std::vector<debug_type> temp_acc;
-  std::vector<debug_type> fx, fy, fz;
+  std::vector<helper_type> dx, dy, dz;
+  std::vector<helper_type> dist, dist2, dist3;
+  std::vector<Type> temp_acc;
+  std::vector<helper_type> fx, fy, fz;
 };
 #define NO_RELATIVITY
 
@@ -74,9 +73,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   //userdata()
   // Copy velocities of bodies
   ObjectsData<ABMD_DOUBLE> *userdata = static_cast<ContextData<ABMD_DOUBLE> *>(context)->objects;
-  memset(&userdata->fx[0], 0, sizeof(debug_type) * userdata->n_objects);
-  memset(&userdata->fy[0], 0, sizeof(debug_type) * userdata->n_objects);
-  memset(&userdata->fz[0], 0, sizeof(debug_type) * userdata->n_objects);
+  memset(&userdata->fx[0], 0, sizeof(helper_type) * userdata->n_objects);
+  memset(&userdata->fy[0], 0, sizeof(helper_type) * userdata->n_objects);
+  memset(&userdata->fz[0], 0, sizeof(helper_type) * userdata->n_objects);
   for (i = 0; i < userdata->n_objects; i++)
   {
     f[6 * i] = x[6 * i + 3];
@@ -109,7 +108,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   {
     for (j = i + 1; j < barrier; j++)
     {
-      debug_type _dx, _dy, _dz, _dist2, _dist, _dist3;
+      helper_type _dx, _dy, _dz, _dist2, _dist, _dist3;
 
       if (i == 3 && j == 10)
       {
@@ -136,6 +135,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         _dist2 = 1.0 / ((_dx * _dx) + (_dy * _dy) + (_dz * _dz));
         _dist = sqrt(_dist2);
         _dist3 = _dist * _dist2;
+
         userdata->dx[i * barrier + j] = _dx;
         userdata->dy[i * barrier + j] = _dy;
         userdata->dz[i * barrier + j] = _dz;
@@ -160,7 +160,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   {
     for (j = i + 1; j < barrier; j++)
     {
-      if (i == 3 && j == 10)
+      if (i == earthNum && j == moonNum)
       {
         // ABMD_DOUBLE k_dx = _dx_me * _dist3_me;
         // ABMD_DOUBLE k_dy = _dy_me * _dist3_me;
@@ -182,28 +182,21 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
       }
       else
       {
-        debug_type _dx = userdata->dx[i * barrier + j],
+        helper_type _dx = userdata->dx[i * barrier + j],
                    _dy = userdata->dy[i * barrier + j],
                    _dz = userdata->dz[i * barrier + j];
-        debug_type _dist3 = userdata->dist3[i * barrier + j];
+        helper_type _dist3 = userdata->dist3[i * barrier + j];
 
-        debug_type k_dx = _dx * _dist3;
-        debug_type k_dy = _dy * _dist3;
-        debug_type k_dz = _dz * _dist3;
-
+        helper_type k_dx = _dx * _dist3;
+        helper_type k_dy = _dy * _dist3;
+        helper_type k_dz = _dz * _dist3;
+        
         userdata->fx[i] += userdata->masses[j] * k_dx;
         userdata->fy[i] += userdata->masses[j] * k_dy;
         userdata->fz[i] += userdata->masses[j] * k_dz;
         userdata->fx[j] -= userdata->masses[i] * k_dx;
         userdata->fy[j] -= userdata->masses[i] * k_dy;
         userdata->fz[j] -= userdata->masses[i] * k_dz;
-
-        // f[6 * i + 3] += ABMD_DOUBLE(userdata->masses[j] * k_dx);
-        // f[6 * i + 4] += ABMD_DOUBLE(userdata->masses[j] * k_dy);
-        // f[6 * i + 5] += ABMD_DOUBLE(userdata->masses[j] * k_dz);
-        // f[6 * j + 3] -= ABMD_DOUBLE(userdata->masses[i] * k_dx);
-        // f[6 * j + 4] -= ABMD_DOUBLE(userdata->masses[i] * k_dy);
-        // f[6 * j + 5] -= ABMD_DOUBLE(userdata->masses[i] * k_dz);
       }
     }
   }
@@ -240,7 +233,6 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
   for (i = 0; i < userdata->n_objects; i++)
   {
-
     f[6 * i] = to_double(f[6 * i]);
     f[6 * i + 1] = to_double(f[6 * i + 1]);
     f[6 * i + 2] = to_double(f[6 * i + 2]);
@@ -309,7 +301,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
                                         -userdata->dy[ij] * to_double(x[6 * j + 4]) +
                                         -userdata->dz[ij] * to_double(x[6 * j + 5]));
       t2 = -1.5 * t2 * t2;
-      double t3 = 0.5 * (userdata->dx[ij] * userdata->temp_acc[3 * j] +
+      double t3 = 0.5 * to_double(userdata->dx[ij] * userdata->temp_acc[3 * j] +
                          userdata->dy[ij] * userdata->temp_acc[3 * j + 1] +
                          userdata->dz[ij] * userdata->temp_acc[3 * j + 2]);
 
@@ -318,9 +310,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
       f[6 * i + 4] += userdata->dy[ij] * c1;
       f[6 * i + 5] += userdata->dz[ij] * c1;
 
-      double p1 = userdata->dist[ij] * (-userdata->dx[ij] * (4 * to_double(x[6 * i + 3]) - 3 * to_double(x[6 * j + 3])) +
-                                        -userdata->dy[ij] * (4 * to_double(x[6 * i + 4]) - 3 * to_double(x[6 * j + 4])) +
-                                        -userdata->dz[ij] * (4 * to_double(x[6 * i + 5]) - 3 * to_double(x[6 * j + 5])));
+      double p1 = userdata->dist[ij] * (-userdata->dx[ij] * (4 * to_double(x[6 * i + 3] - 3 * x[6 * j + 3])) +
+                                        -userdata->dy[ij] * (4 * to_double(x[6 * i + 4] - 3 * x[6 * j + 4])) +
+                                        -userdata->dz[ij] * (4 * to_double(x[6 * i + 5] - 3 * x[6 * j + 5])));
 
       double c2 = revLS2 * userdata->masses[j] * userdata->dist2[ij] * p1;
 

@@ -6,9 +6,6 @@
 
 #include "../pointmasses.h"
 #include "abmd_rk.h"
-#include <qd/dd_real.h>
-
-
 
 template <typename ABMD_DOUBLE>
 class coefss{
@@ -606,7 +603,7 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(ABMD_DOUBLE));
   
-  /*
+/*
   calc_invariants(
       state, abm_test->objects->masses.data(), abm_test->objects->n_objects,
       abm_test->init_energy, abm_test->init_impulse, abm_test->init_center,
@@ -614,20 +611,19 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
       &abm_test->center[abm_test->i]);
 */
 
+#ifdef SAVE_STEPS
+  for (int i = 0; i < dim; i++) {
+    abm_test->f << " " << std::setprecision(30)
+                << state[i]; 
+  }
+  
+  abm_test->f << " " << to_double(abm_test->energy[abm_test->i]);
+  abm_test->f << " " << to_double(abm_test->impulse[abm_test->i]);
+  abm_test->f << " " << to_double(abm_test->center[abm_test->i]);
+  abm_test->f << "\n";
+#endif
 
-  // for (int i = 0; i < dim; i++) {
-  //   abm_test->f << " " << std::setprecision(30)
-  //               << state[i]; 
-  // }
-  
-  
-  /*
-   abm_test->f << " " << to_double(abm_test->energy[abm_test->i]);
-   abm_test->f << " " << to_double(abm_test->impulse[abm_test->i]);
-   abm_test->f << " " << to_double(abm_test->center[abm_test->i]);
-   */
   abm_test->i++;
-  // abm_test->f << "\n";
   t[0] += 1 / 32.0;
 
   return 1;
@@ -639,18 +635,19 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
   int dim = abm_test->dim;
   memcpy(&abm_test->sol_back[abm_test->i * dim], state,
          dim * sizeof(ABMD_DOUBLE));
-      
-  // for (int i = 0; i < dim; i++) {
-  //   abm_test->fb
-  //       << " " << std::setprecision(30)
-  //       << state[i];  
-  // }
-  
-  
+
+#ifdef SAVE_STEPS
+  for (int i = 0; i < dim; i++) {
+    abm_test->fb
+        << " " << std::setprecision(30)
+        << state[i];  
+  }
+  abm_test->fb << "\n"; 
+#endif
+
   abm_test->i++;
-  // abm_test->fb << "\n"; 
   t[0] -= 1 / 32.0;
-  //  t[0] -= 1 / 16.0;
+
   return 1;
 }
 
@@ -661,12 +658,10 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
                     ABMD_DOUBLE *init_center, ABMD_DOUBLE *diff) {
   int order = 13;
   double t0 = 0;
-  // double h = 1 / 16.0;
   int dim = 6 * masses.size();
 
   int n = (int)(1 + (t1 - t0) / h);
   int sol_size = n;
-  //  int sol_size = n;
   double callback_t = 0;
 
   ABMD_DOUBLE *sol =
@@ -725,28 +720,27 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_run(abm);
   abmd_destroy(abm);
 
-  
-
-  for (int i = 0, j = sol_size - 1; i < sol_size; i++, j--) {
-    ABMD_DOUBLE x1 = sol[i * dim + 6 * 4];
-    ABMD_DOUBLE x2 = sol_back[j * dim + 6 * 4];
-
-    ABMD_DOUBLE y1 = sol[i * dim + 6 * 4 + 2];
-    ABMD_DOUBLE y2 = sol_back[j * dim + 6 * 4 + 2];
-
-    ABMD_DOUBLE z1 = sol[i * dim + 6 * 4 + 4];
-    ABMD_DOUBLE z2 = sol_back[j * dim + 6 * 4 + 4];
-
-    diff[i] = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
-  }
-
+#ifdef SAVE_DIFF
   std::ofstream diff_file = std::ofstream("Mars_diff.txt");
 
-  for (int i = 0; i < sol_size; i++) {
-    diff_file << " " << std::setprecision(30) << diff[i] << std::endl;
-  }
-  
+  for (int i = 0, j = sol_size - 1; i < sol_size; i++, j--) {
+    ABMD_DOUBLE x1 = sol[i * dim + 6 * DIFF_PLANET];
+    ABMD_DOUBLE x2 = sol_back[j * dim + 6 * DIFF_PLANET];
 
+    ABMD_DOUBLE y1 = sol[i * dim + 6 * DIFF_PLANET + 2];
+    ABMD_DOUBLE y2 = sol_back[j * dim + 6 * DIFF_PLANET + 2];
+
+    ABMD_DOUBLE z1 = sol[i * dim + 6 * DIFF_PLANET + 4];
+    ABMD_DOUBLE z2 = sol_back[j * dim + 6 * DIFF_PLANET + 4];
+
+    diff_file << " " << std::setprecision(30) << sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2)) << std::endl;
+  }
+#endif
+
+  // for (int i = 0; i < sol_size; i++) {
+  //   diff_file << " " << std::setprecision(30) << diff[i] << std::endl;
+  // }
+  
   free(data_energy);
   free(data_impulse);
   free(data_center);
