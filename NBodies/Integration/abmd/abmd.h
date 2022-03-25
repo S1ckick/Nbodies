@@ -601,6 +601,7 @@ template <typename ABMD_DOUBLE>
 int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
   int dim = abm_test->dim;
+  
   memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(ABMD_DOUBLE));
   
 /*
@@ -667,7 +668,7 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_DOUBLE *sol =
       (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 6 * masses.size());
   ABMD_DOUBLE *sol_back =
-      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 6 * masses.size());
+    (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 6 * masses.size());
   ABMD_DOUBLE *data_energy =
       (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * (int)(100 + t1 / h));
   ABMD_DOUBLE *data_impulse =
@@ -709,6 +710,9 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
 
   abmd_destroy(abm);
 
+
+  
+
   abm = abmd_create(pointmassesCalculateXdot_tmp, dim, t1, t0, h,
                     prev_final_state);
   abm->callback = callback_back;
@@ -736,16 +740,13 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
     diff_file << " " << std::setprecision(30) << sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2)) << std::endl;
   }
 #endif
-
-  // for (int i = 0; i < sol_size; i++) {
-  //   diff_file << " " << std::setprecision(30) << diff[i] << std::endl;
-  // }
   
+  free(sol_back);
   free(data_energy);
   free(data_impulse);
   free(data_center);
   free(sol);
-  free(sol_back);
+  
   free(diff);
 }
 

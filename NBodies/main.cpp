@@ -14,12 +14,13 @@
 using namespace std;
 
 int main() {
-  std::ifstream infile("../NBodies/points.txt");
+  std::ifstream infile("points.txt");
   long double x, y, z, vx, vy, vz, m;
-  std::vector<main_type> rr;
-  rr.resize(6 * 16);
+  std::vector<current_type> rr;
+  int objects_counter = 150;
+  rr.resize(6 * objects_counter);
   std::vector<double> masses;
-  masses.resize(16);
+  masses.resize(objects_counter);
   std::string name;
   int k = 0;
   while (infile >> name >> m >> x >> y >> z >> vx >> vy >> vz) {
@@ -93,7 +94,8 @@ int main() {
   // for (int i = 0; i < masses.size(); i++) {
   //   for (int j = i + 1; j < masses.size(); j++) {
   //     init_p_energy += masses[i] * masses[j] /
-  //                      sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6]) +
+  //                      sqrt((rr[i * 6] - rr[j * 6]) * (rr[i * 6] - rr[j * 6])
+  //                      +
   //                           (rr[i * 6 + 1] - rr[j * 6 + 1]) *
   //                               (rr[i * 6 + 1] - rr[j * 6 + 1]) +
   //                           (rr[i * 6 + 2] - rr[j * 6 + 2]) *
@@ -108,9 +110,10 @@ int main() {
   //   main_type temp_y = rr[i * 6 + 4] * masses[i];
   //   main_type temp_z = rr[i * 6 + 5] * masses[i];
 
-  //   init_impulse_moment[0] += rr[i * 6 + 1] * temp_z - rr[i * 6 + 2] * temp_y;
-  //   init_impulse_moment[1] += rr[i * 6 + 2] * temp_x - rr[i * 6] * temp_z;
-  //   init_impulse_moment[2] += rr[i * 6] * temp_y - rr[i * 6 + 1] * temp_x;
+  //   init_impulse_moment[0] += rr[i * 6 + 1] * temp_z - rr[i * 6 + 2] *
+  //   temp_y; init_impulse_moment[1] += rr[i * 6 + 2] * temp_x - rr[i * 6] *
+  //   temp_z; init_impulse_moment[2] += rr[i * 6] * temp_y - rr[i * 6 + 1] *
+  //   temp_x;
   // }
 
   // rr[moonNum * 6] = moon_res[0];

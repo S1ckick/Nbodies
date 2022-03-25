@@ -129,9 +129,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
       }
       else
       {
-        _dx = to_double(x[6 * j]) - to_double(x[6 * i]);
-        _dy = to_double(x[6 * j + 1]) - to_double(x[6 * i + 1]);
-        _dz = to_double(x[6 * j + 2]) - to_double(x[6 * i + 2]);
+        _dx = to_double(x[6 * j]-x[6 * i]);
+        _dy = to_double(x[6 * j + 1]-x[6 * i + 1]);
+        _dz = to_double(x[6 * j + 2]-x[6 * i + 2]);
         _dist2 = 1.0 / ((_dx * _dx) + (_dy * _dy) + (_dz * _dz));
         _dist = sqrt(_dist2);
         _dist3 = _dist * _dist2;
@@ -199,14 +199,43 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         userdata->fz[j] -= userdata->masses[i] * k_dz;
       }
     }
+
+    for (j = barrier; j < userdata->n_objects; j++)
+    {
+      // Five individual asteroids must not perturb the discrete asteroid ring
+      if (/*(j >= self->ab_start) && (j < self->ab_end) &&*/ (i > moonNum))
+        continue;
+      
+      helper_type _dx = to_double(x[6 * j])-to_double(x[6 * i]),
+             _dy = to_double(x[6 * j + 1])-to_double(x[6 * i + 1]),
+             _dz = to_double(x[6 * j + 2])-to_double(x[6 * i + 2]);
+      helper_type _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
+      helper_type _dist = sqrt(_dist2);
+      helper_type _dist3 = _dist * _dist2;
+      
+      helper_type k_dx = _dx * _dist3;
+      helper_type k_dy = _dy * _dist3;
+      helper_type k_dz = _dz * _dist3;
+      
+      userdata->fx[i] += userdata->masses[j] * k_dx;
+      userdata->fy[i] += userdata->masses[j] * k_dy;
+      userdata->fz[i] += userdata->masses[j] * k_dz;
+      userdata->fx[j] -= userdata->masses[i] * k_dx;
+      userdata->fy[j] -= userdata->masses[i] * k_dy;
+      userdata->fz[j] -= userdata->masses[i] * k_dz;
+    }
   }
 
-  for (int i = 0; i < barrier; i++)
+
+  for (int i = 0; i < userdata->n_objects; i++)
   {
     f[6 * i + 3] = userdata->fx[i];
     f[6 * i + 4] = userdata->fy[i];
     f[6 * i + 5] = userdata->fz[i];
   }
+
+
+
 
   // Recover state of geocentric Moon and convert acceleration
   x[6 * moonNum] = gcmoon_x;
@@ -242,7 +271,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     f[6 * i + 5] = to_double(f[6 * i + 5]);
   }
 
-  double revLS2 = pow(1731456.84 / 299792458, 2);
+    double revLS2 = 3.335661199676477670e-005;
   // RELATIVISTIC
   for (i = 0; i < barrier; ++i)
   {
@@ -316,9 +345,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
       double c2 = revLS2 * userdata->masses[j] * userdata->dist2[ij] * p1;
 
-      double dv_x = to_double(x[6 * i + 3] - x[6 * j + 3]);
-      double dv_y = to_double(x[6 * i + 4] - x[6 * j + 4]);
-      double dv_z = to_double(x[6 * i + 5] - x[6 * j + 5]);
+      double dv_x = to_double(x[6 * i + 3]) - to_double(x[6 * j + 3]);
+      double dv_y = to_double(x[6 * i + 4]) - to_double(x[6 * j + 4]);
+      double dv_z = to_double(x[6 * i + 5]) - to_double(x[6 * j + 5]);
       f[6 * i + 3] += dv_x * c2;
       f[6 * i + 4] += dv_y * c2;
       f[6 * i + 5] += dv_z * c2;
