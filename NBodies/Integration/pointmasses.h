@@ -5,12 +5,13 @@
 
 #include "../def.h"
 
+#define dotProduct(x1, y1, z1, x2, y2, z2) (x1 * x2 + y1 * y2 + z1 * z2)
+#define vecLen2(x, y, z) (x * x + y * y + z * z)
+
 long double to_double(const long double &x)
 {
   return x;
 }
-
-using helper_type = double;
 
 template <typename Type>
 class ObjectsData
@@ -65,13 +66,25 @@ struct ContextData
   std::ofstream fb;
 };
 
+helper_type tay_arr[] = {-3.0 / 2.0, 3.0 / 8.0, 1. / 16., 3. / 128., 3. / 256., 7. / 1024., 9. / 2048., 99. / 32768.};
+
+helper_type tay(helper_type x, int n)
+{
+  helper_type res = 0;
+  for (int i = 0; i < n; i++)
+  {
+    res += tay_arr[i] * std::pow(x, i + 1);
+  }
+  return res;
+}
+
 template <typename ABMD_DOUBLE>
 void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, void *context)
 {
 
   int i, j, k;
-  //userdata()
-  // Copy velocities of bodies
+  // userdata()
+  //  Copy velocities of bodies
   ObjectsData<ABMD_DOUBLE> *userdata = static_cast<ContextData<ABMD_DOUBLE> *>(context)->objects;
   memset(&userdata->fx[0], 0, sizeof(helper_type) * userdata->n_objects);
   memset(&userdata->fy[0], 0, sizeof(helper_type) * userdata->n_objects);
@@ -83,17 +96,20 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     f[6 * i + 2] = x[6 * i + 5];
   }
 
-  // Convert positions and velocities from EMB to barycentric in case of Earth
-  // and Moon
+  // Земля в барицентре
   ABMD_DOUBLE earth_x = x[6 * earthNum], earth_y = x[6 * earthNum + 1],
               earth_z = x[6 * earthNum + 2];
   ABMD_DOUBLE earth_vx = x[6 * earthNum + 3], earth_vy = x[6 * earthNum + 4],
               earth_vz = x[6 * earthNum + 5];
+
+  // Луна в геоцентре, числа на 3 порядка меньше, чем координаты Земли в барицентре
   ABMD_DOUBLE gcmoon_x = x[6 * moonNum], gcmoon_y = x[6 * moonNum + 1],
               gcmoon_z = x[6 * moonNum + 2];
   ABMD_DOUBLE gcmoon_vx = x[6 * moonNum + 3], gcmoon_vy = x[6 * moonNum + 4],
               gcmoon_vz = x[6 * moonNum + 5];
 
+  // Переводим координаты Луны в барицентрическую систему
+  // Теперь здесь числа такого же порядка как и у Земли, Луна близка к Земле
   x[6 * moonNum] = earth_x + gcmoon_x;
   x[6 * moonNum + 1] = earth_y + gcmoon_y;
   x[6 * moonNum + 2] = earth_z + gcmoon_z;
@@ -108,32 +124,38 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   {
     for (j = i + 1; j < barrier; j++)
     {
-      helper_type _dx, _dy, _dz, _dist2, _dist, _dist3;
-
-      if (i == 3 && j == 10)
+      if (i == earthNum && j == moonNum)
       {
+        // Так мы берем расстояние между Землей и Луной (Луна в геоцентре должна быть с предыдущих шагов)
+        // !!! маленькие числа
         _dx_me = gcmoon_x;
         _dy_me = gcmoon_y;
         _dz_me = gcmoon_z;
         _dist2_me = 1.0 / (_dx_me * _dx_me + _dy_me * _dy_me + _dz_me * _dz_me);
         _dist_me = sqrt(_dist2_me);
+
+        // сохраняется 1/||r_earth - r_moon||^3
         _dist3_me = _dist_me * _dist2_me;
 
+        // сохраняем (r_earth - r_moon)
         userdata->dx[i * barrier + j] = to_double(_dx_me);
         userdata->dy[i * barrier + j] = to_double(_dy_me);
         userdata->dz[i * barrier + j] = to_double(_dz_me);
 
+        // сохраняем (r_moon - r_earth) или наоборот...
         userdata->dx[j * barrier + i] = -to_double(_dx_me);
         userdata->dy[j * barrier + i] = -to_double(_dy_me);
         userdata->dz[j * barrier + i] = -to_double(_dz_me);
       }
       else
       {
-        _dx = to_double(x[6 * j]-x[6 * i]);
-        _dy = to_double(x[6 * j + 1]-x[6 * i + 1]);
-        _dz = to_double(x[6 * j + 2]-x[6 * i + 2]);
+        helper_type _dx, _dy, _dz, _dist2, _dist, _dist3;
+        _dx = to_double(x[6 * j] - x[6 * i]);
+        _dy = to_double(x[6 * j + 1] - x[6 * i + 1]);
+        _dz = to_double(x[6 * j + 2] - x[6 * i + 2]);
         _dist2 = 1.0 / ((_dx * _dx) + (_dy * _dy) + (_dz * _dz));
         _dist = sqrt(_dist2);
+        // честно посчитали 1/||r1-r2||^3
         _dist3 = _dist * _dist2;
 
         userdata->dx[i * barrier + j] = _dx;
@@ -160,37 +182,18 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   {
     for (j = i + 1; j < barrier; j++)
     {
-      if (i == earthNum && j == moonNum)
-      {
-        // ABMD_DOUBLE k_dx = _dx_me * _dist3_me;
-        // ABMD_DOUBLE k_dy = _dy_me * _dist3_me;
-        // ABMD_DOUBLE k_dz = _dz_me * _dist3_me;
-
-        // userdata->fx[i] += to_double(userdata->masses[j] * k_dx);
-        // userdata->fy[i] += to_double(userdata->masses[j] * k_dy);
-        // userdata->fz[i] += to_double(userdata->masses[j] * k_dz);
-        // userdata->fx[j] -= to_double(userdata->masses[i] * k_dx);
-        // userdata->fy[j] -= to_double(userdata->masses[i] * k_dy);
-        // userdata->fz[j] -= to_double(userdata->masses[i] * k_dz);
-
-        // f[6 * i + 3] += userdata->masses[j] * k_dx;
-        // f[6 * i + 4] += userdata->masses[j] * k_dy;
-        // f[6 * i + 5] += userdata->masses[j] * k_dz;
-        // f[6 * j + 3] -= userdata->masses[i] * k_dx;
-        // f[6 * j + 4] -= userdata->masses[i] * k_dy;
-        // f[6 * j + 5] -= userdata->masses[i] * k_dz;
-      }
-      else
+      // Если не пара Луна-Земля
+      if (i != earthNum || j != moonNum)
       {
         helper_type _dx = userdata->dx[i * barrier + j],
-                   _dy = userdata->dy[i * barrier + j],
-                   _dz = userdata->dz[i * barrier + j];
+                    _dy = userdata->dy[i * barrier + j],
+                    _dz = userdata->dz[i * barrier + j];
         helper_type _dist3 = userdata->dist3[i * barrier + j];
 
         helper_type k_dx = _dx * _dist3;
         helper_type k_dy = _dy * _dist3;
         helper_type k_dz = _dz * _dist3;
-        
+
         userdata->fx[i] += userdata->masses[j] * k_dx;
         userdata->fy[i] += userdata->masses[j] * k_dy;
         userdata->fz[i] += userdata->masses[j] * k_dz;
@@ -200,32 +203,40 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
       }
     }
 
+    // На этом этапе к Луне и к Земле взаимодействие Луна-Земля еще не добавлены
+
+    // Астероиды
+
     for (j = barrier; j < userdata->n_objects; j++)
     {
       // Five individual asteroids must not perturb the discrete asteroid ring
       if (/*(j >= self->ab_start) && (j < self->ab_end) &&*/ (i > moonNum))
         continue;
-      
-      helper_type _dx = to_double(x[6 * j])-to_double(x[6 * i]),
-             _dy = to_double(x[6 * j + 1])-to_double(x[6 * i + 1]),
-             _dz = to_double(x[6 * j + 2])-to_double(x[6 * i + 2]);
-      helper_type _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
-      helper_type _dist = sqrt(_dist2);
-      helper_type _dist3 = _dist * _dist2;
-      
-      helper_type k_dx = _dx * _dist3;
-      helper_type k_dy = _dy * _dist3;
-      helper_type k_dz = _dz * _dist3;
-      
-      userdata->fx[i] += userdata->masses[j] * k_dx;
-      userdata->fy[i] += userdata->masses[j] * k_dy;
-      userdata->fz[i] += userdata->masses[j] * k_dz;
-      userdata->fx[j] -= userdata->masses[i] * k_dx;
-      userdata->fy[j] -= userdata->masses[i] * k_dy;
-      userdata->fz[j] -= userdata->masses[i] * k_dz;
+
+      helper_type k_dx, k_dy, k_dz;
+
+      if (i != moonNum)
+      {
+        helper_type _dx = to_double(x[6 * j]) - to_double(x[6 * i]),
+                    _dy = to_double(x[6 * j + 1]) - to_double(x[6 * i + 1]),
+                    _dz = to_double(x[6 * j + 2]) - to_double(x[6 * i + 2]);
+        helper_type _dist2 = 1.0 / (_dx * _dx + _dy * _dy + _dz * _dz);
+        helper_type _dist = sqrt(_dist2);
+        helper_type _dist3 = _dist * _dist2;
+
+        k_dx = _dx * _dist3;
+        k_dy = _dy * _dist3;
+        k_dz = _dz * _dist3;
+
+        userdata->fx[i] += userdata->masses[j] * k_dx;
+        userdata->fy[i] += userdata->masses[j] * k_dy;
+        userdata->fz[i] += userdata->masses[j] * k_dz;
+        userdata->fx[j] -= userdata->masses[i] * k_dx;
+        userdata->fy[j] -= userdata->masses[i] * k_dy;
+        userdata->fz[j] -= userdata->masses[i] * k_dz;
+      }
     }
   }
-
 
   for (int i = 0; i < userdata->n_objects; i++)
   {
@@ -234,10 +245,8 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     f[6 * i + 5] = userdata->fz[i];
   }
 
-
-
-
-  // Recover state of geocentric Moon and convert acceleration
+  // Переводим Луну в геоцентр
+  // !!!Теперь ее координаты малы
   x[6 * moonNum] = gcmoon_x;
   x[6 * moonNum + 1] = gcmoon_y;
   x[6 * moonNum + 2] = gcmoon_z;
@@ -245,10 +254,66 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   x[6 * moonNum + 4] = gcmoon_vy;
   x[6 * moonNum + 5] = gcmoon_vz;
 
+  // Ускорение Луны теперь в геоцентре
   f[6 * moonNum + 3] -= f[6 * earthNum + 3];
   f[6 * moonNum + 4] -= f[6 * earthNum + 4];
   f[6 * moonNum + 5] -= f[6 * earthNum + 5];
 
+  // i == moonNum
+  for (j = barrier; j < userdata->n_objects; j++)
+  {
+    // _dx, _dy, _dz -- r_am
+    // _dist3 -- ||r_am||^3
+
+    // r_em:  gcmoon_x
+    // r_ae:  x[6 * j] - earth_x
+
+    ABMD_DOUBLE rem_x = gcmoon_x;
+    ABMD_DOUBLE rem_y = gcmoon_y;
+    ABMD_DOUBLE rem_z = gcmoon_z;
+
+    ABMD_DOUBLE rae_x = (x[6 * j] - earth_x);
+    ABMD_DOUBLE rae_y = (x[6 * j + 1] - earth_y);
+    ABMD_DOUBLE rae_z = (x[6 * j + 2] - earth_z);
+
+    ABMD_DOUBLE bmoon_x = gcmoon_x + earth_x;
+    ABMD_DOUBLE bmoon_y = gcmoon_y + earth_y;
+    ABMD_DOUBLE bmoon_z = gcmoon_z + earth_z;
+
+    ABMD_DOUBLE ram_x = (x[6 * j] - bmoon_x);
+    ABMD_DOUBLE ram_y = (x[6 * j + 1] - bmoon_y);
+    ABMD_DOUBLE ram_z = (x[6 * j + 2] - bmoon_z);
+
+    helper_type dot_emae = to_double(dotProduct(rem_x, rem_y, rem_z, rae_x, rae_y, rae_z));
+    helper_type dot_em = to_double(vecLen2(rem_x, rem_y, rem_z));
+    helper_type dot_ae = to_double(vecLen2(rae_x, rae_y, rae_z));
+
+    helper_type r_x = (2 * dot_emae + dot_em) / dot_ae;
+
+    helper_type tay_res = tay(r_x, 5);
+
+    // В строчках ниже rae_x - должно быть большое число, в то время как rem_x малое
+    // Но мы от малого rem_x отнимаем rae_x * tay_res, где tay_res малое
+    // Так делаем ошибку округления меньше
+    helper_type _dx = to_double(-rem_x - rae_x * tay_res);
+    helper_type _dy = to_double(-rem_y - rae_y * tay_res);
+    helper_type _dz = to_double(-rem_z - rae_z * tay_res);
+
+    helper_type _dist2 = 1.0 / to_double(vecLen2(ram_x, ram_y, ram_z));
+    helper_type _dist = sqrt(_dist2);
+    helper_type _dist3 = _dist * _dist2;
+
+    f[moonNum] += userdata->masses[j] * _dx * _dist3;
+    f[moonNum] += userdata->masses[j] * _dy * _dist3;
+    f[moonNum] += userdata->masses[j] * _dz * _dist3;
+    f[j] -= userdata->masses[moonNum] * to_double(ram_x) * _dist3;
+    f[j] -= userdata->masses[moonNum] * to_double(ram_y) * _dist3;
+    f[j] -= userdata->masses[moonNum] * to_double(ram_z) * _dist3;
+  }
+
+  // Добавили взаимодействие Луна-Астероиды
+
+  // В самом конце добавляем взаимодействие Луна-Земля
   ABMD_DOUBLE k_dx = _dx_me * _dist3_me;
   ABMD_DOUBLE k_dy = _dy_me * _dist3_me;
   ABMD_DOUBLE k_dz = _dz_me * _dist3_me;
@@ -256,6 +321,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   f[6 * earthNum + 3] += to_double(userdata->masses[moonNum] * k_dx);
   f[6 * earthNum + 4] += to_double(userdata->masses[moonNum] * k_dy);
   f[6 * earthNum + 5] += to_double(userdata->masses[moonNum] * k_dz);
+  // Сумма масс, потому что в f ускорение Луны в геоцентр мы перевели
   f[6 * moonNum + 3] -= to_double((userdata->masses[earthNum] + userdata->masses[moonNum]) * k_dx);
   f[6 * moonNum + 4] -= to_double((userdata->masses[earthNum] + userdata->masses[moonNum]) * k_dy);
   f[6 * moonNum + 5] -= to_double((userdata->masses[earthNum] + userdata->masses[moonNum]) * k_dz);
@@ -271,20 +337,21 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     f[6 * i + 5] = to_double(f[6 * i + 5]);
   }
 
-    double revLS2 = 3.335661199676477670e-005;
+  double revLS2 = 3.335661199676477670e-5;
   // RELATIVISTIC
   for (i = 0; i < barrier; ++i)
   {
-    // луна должна быть в барицентре прибавить ускорение земли если луна
+    
     userdata->temp_acc[3 * i] = to_double(f[6 * i + 3]);
     userdata->temp_acc[3 * i + 1] = to_double(f[6 * i + 4]);
     userdata->temp_acc[3 * i + 2] = to_double(f[6 * i + 5]);
-
-    if (i == 10)
+    // в f ускорение Луны в геоцентре
+    // надо перевести ее в барицентр
+    if (i == moonNum)
     {
-      userdata->temp_acc[3 * i] += to_double(f[6 * 3 + 3]);
-      userdata->temp_acc[3 * i + 1] += to_double(f[6 * 3 + 4]);
-      userdata->temp_acc[3 * i + 2] += to_double(f[6 * 3 + 5]);
+      userdata->temp_acc[3 * i] += to_double(f[6 * earthNum + 3]);
+      userdata->temp_acc[3 * i + 1] += to_double(f[6 * earthNum + 4]);
+      userdata->temp_acc[3 * i + 2] += to_double(f[6 * earthNum + 5]);
     }
   }
 
@@ -310,12 +377,12 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
       int ij = barrier * i + j;
 
       double vj_sqr = to_double(x[6 * j + 3]) * to_double(x[6 * j + 3]) +
-                    to_double(x[6 * j + 4]) * to_double(x[6 * j + 4]) +
-                    to_double(x[6 * j + 5]) * to_double(x[6 * j + 5]);
+                      to_double(x[6 * j + 4]) * to_double(x[6 * j + 4]) +
+                      to_double(x[6 * j + 5]) * to_double(x[6 * j + 5]);
 
       double vi_dot_vj = to_double(x[6 * i + 3]) * to_double(x[6 * j + 3]) +
-                    to_double(x[6 * i + 4]) * to_double(x[6 * j + 4]) +
-                    to_double(x[6 * i + 5]) * to_double(x[6 * j + 5]);
+                         to_double(x[6 * i + 4]) * to_double(x[6 * j + 4]) +
+                         to_double(x[6 * i + 5]) * to_double(x[6 * j + 5]);
 
       double sum_j = 0.0;
       for (k = 0; k < barrier; ++k)
@@ -331,8 +398,8 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
                                         -userdata->dz[ij] * to_double(x[6 * j + 5]));
       t2 = -1.5 * t2 * t2;
       double t3 = 0.5 * to_double(userdata->dx[ij] * userdata->temp_acc[3 * j] +
-                         userdata->dy[ij] * userdata->temp_acc[3 * j + 1] +
-                         userdata->dz[ij] * userdata->temp_acc[3 * j + 2]);
+                                  userdata->dy[ij] * userdata->temp_acc[3 * j + 1] +
+                                  userdata->dz[ij] * userdata->temp_acc[3 * j + 2]);
 
       double c1 = revLS2 * userdata->masses[j] * userdata->dist3[ij] * (t1 + t2 + t3);
       f[6 * i + 3] += userdata->dx[ij] * c1;

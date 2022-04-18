@@ -12,7 +12,7 @@ class coefss{
 public:
 static ABMD_DOUBLE PREDICTOR_COEFFS[ABMD_MAX_ORDER];
 };
-
+#ifdef NUMBER_DOUBLE_DOUBLE
 template<> dd_real coefss<dd_real>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
     dd_real(1.0),
     dd_real(1.0) / dd_real(2.0),
@@ -33,7 +33,7 @@ template<> dd_real coefss<dd_real>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
     dd_real(8.092989203533249e15) / dd_real(3.201186852864e16),
     dd_real(8.5455477715379e13) / dd_real(3.4237292544e14),
     dd_real(1.2600467236042756559e19) / dd_real(5.109094217170944e19)};
-
+#else
     template<> long double coefss<long double>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
     (long double)(1.0),
     (long double)(1.0) / (long double)(2.0),
@@ -54,7 +54,7 @@ template<> dd_real coefss<dd_real>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
     (long double)(8.092989203533249e15) / (long double)(3.201186852864e16),
     (long double)(8.5455477715379e13) / (long double)(3.4237292544e14),
     (long double)(1.2600467236042756559e19) / (long double)(5.109094217170944e19)};
-
+#endif 
 /********** ABMD method **********/
 template <typename ABMD_DOUBLE>
 struct ABMData {

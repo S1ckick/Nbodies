@@ -16,14 +16,14 @@ using namespace std;
 int main() {
   std::ifstream infile("points.txt");
   long double x, y, z, vx, vy, vz, m;
-  std::vector<current_type> rr;
+  std::vector<main_type> rr;
   int objects_counter = 150;
   rr.resize(6 * objects_counter);
   std::vector<double> masses;
   masses.resize(objects_counter);
   std::string name;
   int k = 0;
-  while (infile >> name >> m >> x >> y >> z >> vx >> vy >> vz) {
+  while ((infile >> name >> m >> x >> y >> z >> vx >> vy >> vz) && k < objects_counter) {
     masses[k] = m;
 
     rr[k * 6] = x;
