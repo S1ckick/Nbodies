@@ -214,9 +214,10 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         continue;
 
       helper_type k_dx, k_dy, k_dz;
-
+#ifdef TAYLOR
       if (i != moonNum)
       {
+#endif
         helper_type _dx = to_double(x[6 * j]) - to_double(x[6 * i]),
                     _dy = to_double(x[6 * j + 1]) - to_double(x[6 * i + 1]),
                     _dz = to_double(x[6 * j + 2]) - to_double(x[6 * i + 2]);
@@ -234,7 +235,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         userdata->fx[j] -= userdata->masses[i] * k_dx;
         userdata->fy[j] -= userdata->masses[i] * k_dy;
         userdata->fz[j] -= userdata->masses[i] * k_dz;
+#ifdef TAYLOR
       }
+#endif
     }
   }
 
@@ -259,6 +262,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   f[6 * moonNum + 4] -= f[6 * earthNum + 4];
   f[6 * moonNum + 5] -= f[6 * earthNum + 5];
 
+#ifdef TAYLOR
   // i == moonNum
   for (j = barrier; j < userdata->n_objects; j++)
   {
@@ -268,25 +272,25 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     // r_em:  gcmoon_x
     // r_ae:  x[6 * j] - earth_x
 
-    ABMD_DOUBLE rem_x = gcmoon_x;
-    ABMD_DOUBLE rem_y = gcmoon_y;
-    ABMD_DOUBLE rem_z = gcmoon_z;
+    helper_type rem_x = to_double(gcmoon_x);
+    helper_type rem_y = to_double(gcmoon_y);
+    helper_type rem_z = to_double(gcmoon_z);
 
-    ABMD_DOUBLE rae_x = (x[6 * j] - earth_x);
-    ABMD_DOUBLE rae_y = (x[6 * j + 1] - earth_y);
-    ABMD_DOUBLE rae_z = (x[6 * j + 2] - earth_z);
+    helper_type rae_x = (to_double(x[6 * j]) - to_double(earth_x));
+    helper_type rae_y = (to_double(x[6 * j + 1]) - to_double(earth_y));
+    helper_type rae_z = (to_double(x[6 * j + 2]) - to_double(earth_z));
 
-    ABMD_DOUBLE bmoon_x = gcmoon_x + earth_x;
-    ABMD_DOUBLE bmoon_y = gcmoon_y + earth_y;
-    ABMD_DOUBLE bmoon_z = gcmoon_z + earth_z;
+    helper_type bmoon_x = to_double(gcmoon_x) + to_double(earth_x);
+    helper_type bmoon_y = to_double(gcmoon_y) + to_double(earth_y);
+    helper_type bmoon_z = to_double(gcmoon_z) + to_double(earth_z);
 
-    ABMD_DOUBLE ram_x = (x[6 * j] - bmoon_x);
-    ABMD_DOUBLE ram_y = (x[6 * j + 1] - bmoon_y);
-    ABMD_DOUBLE ram_z = (x[6 * j + 2] - bmoon_z);
+    helper_type ram_x = (to_double(x[6 * j]) - to_double(bmoon_x));
+    helper_type ram_y = (to_double(x[6 * j + 1]) - to_double(bmoon_y));
+    helper_type ram_z = (to_double(x[6 * j + 2]) - to_double(bmoon_z));
 
-    helper_type dot_emae = to_double(dotProduct(rem_x, rem_y, rem_z, rae_x, rae_y, rae_z));
-    helper_type dot_em = to_double(vecLen2(rem_x, rem_y, rem_z));
-    helper_type dot_ae = to_double(vecLen2(rae_x, rae_y, rae_z));
+    helper_type dot_emae = dotProduct(rem_x, rem_y, rem_z, rae_x, rae_y, rae_z);
+    helper_type dot_em = vecLen2(rem_x, rem_y, rem_z);
+    helper_type dot_ae = vecLen2(rae_x, rae_y, rae_z);
 
     helper_type r_x = (2 * dot_emae + dot_em) / dot_ae;
 
@@ -295,21 +299,22 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     // В строчках ниже rae_x - должно быть большое число, в то время как rem_x малое
     // Но мы от малого rem_x отнимаем rae_x * tay_res, где tay_res малое
     // Так делаем ошибку округления меньше
-    helper_type _dx = to_double(-rem_x - rae_x * tay_res);
-    helper_type _dy = to_double(-rem_y - rae_y * tay_res);
-    helper_type _dz = to_double(-rem_z - rae_z * tay_res);
+    helper_type _dx = -rem_x - rae_x * tay_res;
+    helper_type _dy = -rem_y - rae_y * tay_res;
+    helper_type _dz = -rem_z - rae_z * tay_res;
 
-    helper_type _dist2 = 1.0 / to_double(vecLen2(ram_x, ram_y, ram_z));
+    helper_type _dist2 = 1.0 / vecLen2(ram_x, ram_y, ram_z);
     helper_type _dist = sqrt(_dist2);
     helper_type _dist3 = _dist * _dist2;
 
     f[moonNum] += userdata->masses[j] * _dx * _dist3;
     f[moonNum] += userdata->masses[j] * _dy * _dist3;
     f[moonNum] += userdata->masses[j] * _dz * _dist3;
-    f[j] -= userdata->masses[moonNum] * to_double(ram_x) * _dist3;
-    f[j] -= userdata->masses[moonNum] * to_double(ram_y) * _dist3;
-    f[j] -= userdata->masses[moonNum] * to_double(ram_z) * _dist3;
+    f[j] -= userdata->masses[moonNum] * ram_x * _dist3;
+    f[j] -= userdata->masses[moonNum] * ram_y * _dist3;
+    f[j] -= userdata->masses[moonNum] * ram_z * _dist3;
   }
+#endif
 
   // Добавили взаимодействие Луна-Астероиды
 

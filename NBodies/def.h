@@ -1,10 +1,12 @@
 #define NUMBER_DOUBLE_DOUBLE 1
 //#define NUMBER_DOUBLE 1
 
-#define SAVE_STEPS 0
+//#define SAVE_STEPS 0
 #define SAVE_DIFF 1
 
-const int YEARS = 20;
+#define TAYLOR
+
+const int YEARS = 40;
 
 enum class Planets{
   SUN, MERCURY, VENUS, EARTH, 
