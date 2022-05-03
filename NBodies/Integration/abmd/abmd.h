@@ -546,9 +546,9 @@ void calc_invariants(ABMD_DOUBLE *rr, double *masses, int num, double *new_cente
     b[2] += mu_star * to_double(rr[i * 6 + 2]);
   }
 
-  //b[0] /= sum_mu_star;
-  //b[1] /= sum_mu_star;
-  //b[2] /= sum_mu_star;
+  b[0] /= sum_mu_star;
+  b[1] /= sum_mu_star;
+  b[2] /= sum_mu_star;
 
   *new_center = sqrt(vecLen2(b[0],b[1],b[2]));
 
