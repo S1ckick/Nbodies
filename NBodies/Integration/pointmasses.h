@@ -60,17 +60,21 @@ struct ContextData
   std::ofstream fi;
 };
 
-helper_type tay_arr[] = {-3.0 / 2.0, 3.0 / 8.0, 1. / 16., 3. / 128., 3. / 256., 7. / 1024., 9. / 2048., 99. / 32768.};
+#ifdef TAYLOR
 
-helper_type tay(helper_type x, int n)
+template<typename taylor_type>
+taylor_type tay(taylor_type x, int n)
 {
-  helper_type res = 0;
+  taylor_type res = 0;
+  taylor_type tay_arr[] = {-3.0 / 2.0, 3.0 / 8.0, 1. / 16., 3. / 128., 3. / 256., 7. / 1024., 9. / 2048., 99. / 32768.};
   for (int i = 0; i < n; i++)
   {
-    res += tay_arr[i] * std::pow(x, i + 1);
+    res += tay_arr[i] * pow(x, i + 1);
   }
   return res;
 }
+
+#endif
 
 template <typename ABMD_DOUBLE>
 void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, void *context)
@@ -266,40 +270,40 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     // r_em:  gcmoon_x
     // r_ae:  x[6 * j] - earth_x
 
-    helper_type rem_x = to_double(gcmoon_x);
-    helper_type rem_y = to_double(gcmoon_y);
-    helper_type rem_z = to_double(gcmoon_z);
+    TAYLOR_TYPE rem_x = gcmoon_x;
+    TAYLOR_TYPE rem_y = gcmoon_y;
+    TAYLOR_TYPE rem_z = gcmoon_z;
 
-    helper_type rae_x = (to_double(x[6 * j]) - to_double(earth_x));
-    helper_type rae_y = (to_double(x[6 * j + 1]) - to_double(earth_y));
-    helper_type rae_z = (to_double(x[6 * j + 2]) - to_double(earth_z));
+    TAYLOR_TYPE rae_x = x[6 * j] - earth_x;
+    TAYLOR_TYPE rae_y = x[6 * j + 1] - earth_y;
+    TAYLOR_TYPE rae_z = x[6 * j + 2] - earth_z;
 
-    helper_type bmoon_x = to_double(gcmoon_x) + to_double(earth_x);
-    helper_type bmoon_y = to_double(gcmoon_y) + to_double(earth_y);
-    helper_type bmoon_z = to_double(gcmoon_z) + to_double(earth_z);
+    TAYLOR_TYPE bmoon_x = gcmoon_x + earth_x;
+    TAYLOR_TYPE bmoon_y = gcmoon_y + earth_y;
+    TAYLOR_TYPE bmoon_z = gcmoon_z + earth_z;
 
-    helper_type ram_x = (to_double(x[6 * j]) - to_double(bmoon_x));
-    helper_type ram_y = (to_double(x[6 * j + 1]) - to_double(bmoon_y));
-    helper_type ram_z = (to_double(x[6 * j + 2]) - to_double(bmoon_z));
+    TAYLOR_TYPE ram_x = x[6 * j] - bmoon_x;
+    TAYLOR_TYPE ram_y = x[6 * j + 1] - bmoon_y;
+    TAYLOR_TYPE ram_z = x[6 * j + 2] - bmoon_z;
 
-    helper_type dot_emae = dotProduct(rem_x, rem_y, rem_z, rae_x, rae_y, rae_z);
-    helper_type dot_em = vecLen2(rem_x, rem_y, rem_z);
-    helper_type dot_ae = vecLen2(rae_x, rae_y, rae_z);
+    TAYLOR_TYPE dot_emae = dotProduct(rem_x, rem_y, rem_z, rae_x, rae_y, rae_z);
+    TAYLOR_TYPE dot_em = vecLen2(rem_x, rem_y, rem_z);
+    TAYLOR_TYPE dot_ae = vecLen2(rae_x, rae_y, rae_z);
 
-    helper_type r_x = (2 * dot_emae + dot_em) / dot_ae;
+    TAYLOR_TYPE r_x = (2 * dot_emae + dot_em) / dot_ae;
 
-    helper_type tay_res = tay(r_x, 8);
+    TAYLOR_TYPE tay_res = tay<TAYLOR_TYPE>(r_x, 8);
 
     // В строчках ниже rae_x - должно быть большое число, в то время как rem_x малое
     // Но мы от малого rem_x отнимаем rae_x * tay_res, где tay_res малое
     // Так делаем ошибку округления меньше
-    helper_type _dx = -rem_x - rae_x * tay_res;
-    helper_type _dy = -rem_y - rae_y * tay_res;
-    helper_type _dz = -rem_z - rae_z * tay_res;
+    TAYLOR_TYPE _dx = -rem_x - rae_x * tay_res;
+    TAYLOR_TYPE _dy = -rem_y - rae_y * tay_res;
+    TAYLOR_TYPE _dz = -rem_z - rae_z * tay_res;
 
-    helper_type _dist2 = 1.0 / vecLen2(ram_x, ram_y, ram_z);
-    helper_type _dist = sqrt(_dist2);
-    helper_type _dist3 = _dist * _dist2;
+    TAYLOR_TYPE _dist2 = 1.0 / vecLen2(ram_x, ram_y, ram_z);
+    TAYLOR_TYPE _dist = sqrt(_dist2);
+    TAYLOR_TYPE _dist3 = _dist * _dist2;
 
     f[moonNum] += userdata->masses[j] * _dx * _dist3;
     f[moonNum] += userdata->masses[j] * _dy * _dist3;

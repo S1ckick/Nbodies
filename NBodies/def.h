@@ -7,6 +7,9 @@
 //#define SAVE_INV 1
 
 #define TAYLOR
+#ifdef TAYLOR
+  #define TAYLOR_TYPE ABMD_DOUBLE
+#endif
 
 
 const int YEARS = 40;
