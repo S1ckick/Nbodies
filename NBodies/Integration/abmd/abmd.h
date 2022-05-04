@@ -3,6 +3,24 @@
 
 #include <cstdlib>
 #include <string>
+#include <vector>
+
+std::vector<std::string> split(std::string s, std::string delimiter)
+{
+  std::size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+  std::string token;
+  std::vector<std::string> res;
+
+  while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos)
+  {
+    token = s.substr(pos_start, pos_end - pos_start);
+    pos_start = pos_end + delim_len;
+    res.push_back(token);
+  }
+
+  res.push_back(s.substr(pos_start));
+  return res;
+}
 
 #include "../pointmasses.h"
 #include "abmd_rk.h"
@@ -515,7 +533,7 @@ void moonToBarycenter(ABMD_DOUBLE *rr, ABMD_DOUBLE *res)
   res[5] = gcmoon_vz;
 }
 
-#define dist(x1, y1, z1, x2, y2, z2) (sqrt((x1 - x2)*(x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2)))
+#define dist(x1, y1, z1, x2, y2, z2) (sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2)))
 #define vecLen2(x, y, z) (x * x + y * y + z * z)
 
 template <typename ABMD_DOUBLE>
@@ -529,13 +547,16 @@ void calc_invariants(ABMD_DOUBLE *rr, double *masses, int num, double *new_cente
 
   std::vector<double> b(3, 0);
   double sum_mu_star = 0;
-  for(int i = 0; i < num; i++){
+  for (int i = 0; i < num; i++)
+  {
     double mu_star = 0;
     double sum = 0;
-    for(int j = 0; j < num; j++){
-      if(j != i){
-        double dist = dist(to_double(rr[i*6]), to_double(rr[i * 6 + 1]), to_double(rr[i * 6 + 2]),
-                                      to_double(rr[j * 6]), to_double(rr[j * 6 + 1]), to_double(rr[j * 6 + 2]));
+    for (int j = 0; j < num; j++)
+    {
+      if (j != i)
+      {
+        double dist = dist(to_double(rr[i * 6]), to_double(rr[i * 6 + 1]), to_double(rr[i * 6 + 2]),
+                           to_double(rr[j * 6]), to_double(rr[j * 6 + 1]), to_double(rr[j * 6 + 2]));
         sum += masses[j] / dist;
       }
     }
@@ -550,7 +571,7 @@ void calc_invariants(ABMD_DOUBLE *rr, double *masses, int num, double *new_cente
   b[1] /= sum_mu_star;
   b[2] /= sum_mu_star;
 
-  *new_center = sqrt(vecLen2(b[0],b[1],b[2]));
+  *new_center = sqrt(vecLen2(b[0], b[1], b[2]));
 
   //----------END of relativistic barycentre-------------
 
@@ -568,27 +589,24 @@ template <typename ABMD_DOUBLE>
 int callback_there(double *t, ABMD_DOUBLE *state, void *context)
 {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
-  int dim = abm_test->dim;
 
-  memcpy(&abm_test->sol[abm_test->i * dim], state, dim * sizeof(ABMD_DOUBLE));
-  if (abm_test->i % 100 == 0)
-  {
 #ifdef SAVE_STEPS
-    double inv = 0;
-    calc_invariants(
-        state, abm_test->objects->masses.data(), abm_test->objects->n_objects,
-        &inv);
-    // for (int i = 0; i < dim; i++)
-    // {
-    //   abm_test->f << " " << std::setprecision(30)
-    //               << state[i];
-    // }
-
-    // abm_test->f << " " << to_double(abm_test->energy[abm_test->i]);
-    // abm_test->f << " " << to_double(abm_test->impulse[abm_test->i]);
-    abm_test->f << " " << inv << "\n";
+    abm_test->f << std::setprecision(20) 
+                 << state[6 * DIFF_PLANET] << " "
+                 << state[6 * DIFF_PLANET + 1] << " "
+                 << state[6 * DIFF_PLANET + 2] << " "
+                 << state[6 * DIFF_PLANET + 3] << " "
+                 << state[6 * DIFF_PLANET + 4] << " "
+                 << state[6 * DIFF_PLANET + 5] << std::endl;
 #endif
-  }
+
+#ifdef SAVE_INV
+  double inv_barycentre = 0;
+  calc_invariants(
+      state, abm_test->objects->masses.data(), abm_test->objects->n_objects,
+      &inv_barycentre);
+  abm_test->fi << " " << inv_barycentre << "\n";
+#endif
 
   abm_test->i++;
   t[0] += 1 / 32.0;
@@ -601,18 +619,16 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context)
 {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
   int dim = abm_test->dim;
-  memcpy(&abm_test->sol_back[abm_test->i * dim], state,
-         dim * sizeof(ABMD_DOUBLE));
 
-// #ifdef SAVE_STEPS
-//   for (int i = 0; i < dim; i++)
-//   {
-//     abm_test->fb
-//         << " " << std::setprecision(30)
-//         << state[i];
-//   }
-//   abm_test->fb << "\n";
-// #endif
+#ifdef SAVE_STEPS
+    abm_test->fb << std::setprecision(20) 
+                 << state[6 * DIFF_PLANET] << " "
+                 << state[6 * DIFF_PLANET + 1] << " "
+                 << state[6 * DIFF_PLANET + 2] << " "
+                 << state[6 * DIFF_PLANET + 3] << " "
+                 << state[6 * DIFF_PLANET + 4] << " "
+                 << state[6 * DIFF_PLANET + 5] << std::endl;
+#endif
 
   abm_test->i++;
   t[0] -= 1 / 32.0;
@@ -622,7 +638,7 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context)
 
 template <typename ABMD_DOUBLE>
 void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
-                    std::vector<double> masses, double h, double t1, ABMD_DOUBLE *diff)
+                    std::vector<double> masses, double h, double t1)
 {
   int order = 13;
   double t0 = 0;
@@ -630,26 +646,22 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
 
   int n = (int)(1 + (t1 - t0) / h);
   int sol_size = n;
+  std::cout << "sol_size : " << sol_size << std::endl;
   double callback_t = 0;
 
-  ABMD_DOUBLE *sol =
-      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 6 * masses.size());
-  ABMD_DOUBLE *sol_back =
-      (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * sol_size * 6 * masses.size());
   double *data_center =
       (double *)malloc(sizeof(double) * sol_size);
 
   ObjectsData<ABMD_DOUBLE> *objects = new ObjectsData<ABMD_DOUBLE>(masses);
   ContextData<ABMD_DOUBLE> abm_test{
       .objects = objects,
-      .sol = sol,
-      .sol_back = sol_back,
       .callback_t = &callback_t,
       .center = data_center,
       .i = 0,
       .dim = dim,
-      .f = std::ofstream("res_out.txt"),     // fopen("res_out.txt", "wt"),
-      .fb = std::ofstream("res_b_out.txt")}; // fopen("res_b_out.txt", "wt")};
+      .f = std::ofstream("res_out.txt"),      // fopen("res_out.txt", "wt"),
+      .fb = std::ofstream("res_b_out.txt"), // fopen("res_b_out.txt", "wt")};
+      .fi = std::ofstream("res_inv.txt")};
   ABMD<ABMD_DOUBLE> *abm =
       abmd_create(pointmassesCalculateXdot_tmp, dim, t0, t1, h, x.data());
 
@@ -682,27 +694,43 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
 
 #ifdef SAVE_DIFF
   std::ofstream diff_file = std::ofstream("Mars_diff.txt");
+  std::ifstream b_f("res_b_out.txt");
+  std::ifstream o_f("res_out.txt");
+  std::string str;
+  std::vector<std::string> vec_str;
 
-  for (int i = 0, j = sol_size - 1; i < sol_size; i++, j--)
+  while (std::getline(b_f, str))
   {
-    ABMD_DOUBLE x1 = sol[i * dim + 6 * DIFF_PLANET];
-    ABMD_DOUBLE x2 = sol_back[j * dim + 6 * DIFF_PLANET];
-
-    ABMD_DOUBLE y1 = sol[i * dim + 6 * DIFF_PLANET + 2];
-    ABMD_DOUBLE y2 = sol_back[j * dim + 6 * DIFF_PLANET + 2];
-
-    ABMD_DOUBLE z1 = sol[i * dim + 6 * DIFF_PLANET + 4];
-    ABMD_DOUBLE z2 = sol_back[j * dim + 6 * DIFF_PLANET + 4];
-
-    diff_file << " " << std::setprecision(30) << sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2)) << std::endl;
+    if (str.size() > 3)
+    {
+      vec_str.push_back(str);
+    }
   }
-#endif
 
-  free(sol_back);
+  int j = vec_str.size() - 1;
+
+  while (std::getline(o_f, str))
+  {
+    if (str.size() > 3)
+    {
+      std::vector<std::string> res_split = split(str, " ");
+      std::vector<std::string> res_b_split = split(vec_str[j], " ");
+
+      double x1 = std::stod(res_split[0]);
+      double x2 = std::stod(res_b_split[0]);
+
+      double y1 = std::stod(res_split[2]);
+      double y2 = std::stod(res_b_split[2]);
+
+      double z1 = std::stod(res_split[4]);
+      double z2 = std::stod(res_b_split[4]);
+
+      diff_file << " " << std::setprecision(30) << sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2)) << std::endl;
+      j--;
+    }
+  }
   free(data_center);
-  free(sol);
-
-  free(diff);
+#endif
 }
 
 #endif // ABMD_H

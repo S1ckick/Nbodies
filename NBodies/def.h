@@ -1,10 +1,13 @@
 #define NUMBER_DOUBLE_DOUBLE 1
 //#define NUMBER_DOUBLE 1
 
-//#define SAVE_STEPS 0
+#define SAVE_STEPS 1
 #define SAVE_DIFF 1
 
+//#define SAVE_INV 1
+
 #define TAYLOR
+
 
 const int YEARS = 40;
 

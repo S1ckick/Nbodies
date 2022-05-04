@@ -12,6 +12,7 @@
 #include "Utils/helper.h"
 #include "Writer/writer.h"
 
+
 void moonToBarycenter(std::vector<main_type> &rr, main_type *res)
 {
   main_type earth_x = rr[earthNum * 6];
@@ -72,41 +73,54 @@ int main() {
 
   // adjust initial positions and velocities
 
+#ifdef SAVE_INV
 
   main_type *gcmoon = (main_type *)malloc(6 * sizeof(main_type));
   moonToBarycenter(rr, gcmoon);
 
-  std::vector<double> pos_adj(3, 0);
-  std::vector<double> vel_adj(3, 0);
+  std::vector<main_type> pos_adj(3, 0);
+  std::vector<main_type> vel_adj(3, 0);
+  main_type sum_mu_star = 0;
   for(int i = 0; i < objects_counter; i++){
-    double mu_star = 0;
-    double sum = 0;
+    main_type mu_star = 0;
+    main_type mu_dot = 0;
+    main_type sum = 0;
+    main_type sum_dot = 0;
+
     for(int j = 0; j < objects_counter; j++){
       if(j != i){
-        double dist = dist(to_double(rr[i*6]), to_double(rr[i * 6 + 1]), to_double(rr[i * 6 + 2]),
-                                      to_double(rr[j * 6]), to_double(rr[j * 6 + 1]), to_double(rr[j * 6 + 2]));
+        main_type dist = dist(rr[i*6], rr[i * 6 + 1], rr[i * 6 + 2],
+                                      rr[j * 6], rr[j * 6 + 1], rr[j * 6 + 2]);
+        sum_dot += masses[j] *  dotProduct(rr[i*6]   - rr[j*6], 
+                                           rr[i*6+1] - rr[j*6+1], 
+                                           rr[i*6+2] - rr[j*6+2],
+                                           rr[i*6+3] + rr[j*6+3],
+                                           rr[i*6+4] + rr[j*6+4],
+                                           rr[i*6+5] + rr[j*6+5]) / (dist * dist * dist);
         sum += masses[j] / dist;
       }
     }
-    mu_star = masses[i] * (1 + 1 / (2 * 299792.458 * 299792.458) * (vecLen2(to_double(rr[i * 6 + 3]), to_double(rr[i * 6 + 4]), to_double(rr[i * 6 + 5])) - sum));
-    
-    pos_adj[0] += mu_star * to_double(rr[i * 6]);
-    pos_adj[1] += mu_star * to_double(rr[i * 6 + 1]);
-    pos_adj[2] += mu_star * to_double(rr[i * 6 + 2]);
+    mu_star = masses[i] * (1 + 1 / (2 * 299792.458 * 299792.458) * (vecLen2(rr[i * 6 + 3], rr[i * 6 + 4], rr[i * 6 + 5]) - sum));
+    mu_dot = masses[i] * 1 / (2 * 299792.458 * 299792.458) * sum_dot;
 
-    vel_adj[0] += mu_star * to_double(rr[i * 6 + 3]);
-    vel_adj[1] += mu_star * to_double(rr[i * 6 + 4]);
-    vel_adj[2] += mu_star * to_double(rr[i * 6 + 5]);
+    sum_mu_star += mu_star;
+    pos_adj[0] += mu_star * rr[i * 6];
+    pos_adj[1] += mu_star * rr[i * 6 + 1];
+    pos_adj[2] += mu_star * rr[i * 6 + 2];
+
+    vel_adj[0] += (mu_star * rr[i * 6 + 3] + mu_dot * rr[i * 6]);
+    vel_adj[1] += (mu_star * rr[i * 6 + 4] + mu_dot * rr[i * 6 + 1]);
+    vel_adj[2] += (mu_star * rr[i * 6 + 5] + mu_dot * rr[i * 6 + 2]);
   }
 
   for(int i = 0; i < objects_counter; i++){
-    rr[i * 6]     -= pos_adj[0];
-    rr[i * 6 + 1] -= pos_adj[1];
-    rr[i * 6 + 2] -= pos_adj[2];
+    rr[i * 6]     -= pos_adj[0] / sum_mu_star;
+    rr[i * 6 + 1] -= pos_adj[1] / sum_mu_star;
+    rr[i * 6 + 2] -= pos_adj[2] / sum_mu_star;
 
-    rr[i * 6 + 3] -= vel_adj[0];
-    rr[i * 6 + 4] -= vel_adj[1];
-    rr[i * 6 + 5] -= vel_adj[2];
+    rr[i * 6 + 3] -= vel_adj[0] / sum_mu_star;
+    rr[i * 6 + 4] -= vel_adj[1] / sum_mu_star;
+    rr[i * 6 + 5] -= vel_adj[2] / sum_mu_star;
   }
   std::cout << pos_adj[0] << " " << pos_adj[1] << " " << pos_adj[2] << std::endl;
   std::cout << vel_adj[0] << " " << vel_adj[1] << " " << vel_adj[2] << std::endl;
@@ -120,15 +134,13 @@ int main() {
 
   // END of adjustment
 
+#endif
+
   double h = 0.03125;
   auto start = std::chrono::high_resolution_clock::now();
   double t = 365 * YEARS;
-  int sol_size = 2 * (int)(1 + t / h) - 1;
 
-  main_type *diff = (main_type *)malloc(sizeof(main_type) * sol_size);
-
-  ABMD_calc_diff(rr, masses, h, t, diff);
-
+  ABMD_calc_diff(rr, masses, h, t);
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration =
       std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

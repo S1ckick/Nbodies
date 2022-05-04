@@ -51,14 +51,13 @@ template <typename ABMD_DOUBLE>
 struct ContextData
 {
   ObjectsData<ABMD_DOUBLE> *objects;
-  ABMD_DOUBLE *sol;
-  ABMD_DOUBLE *sol_back;
   double *callback_t;
   double *center;
   int i;
   int dim;
   std::ofstream f;
   std::ofstream fb;
+  std::ofstream fi;
 };
 
 helper_type tay_arr[] = {-3.0 / 2.0, 3.0 / 8.0, 1. / 16., 3. / 128., 3. / 256., 7. / 1024., 9. / 2048., 99. / 32768.};
@@ -289,7 +288,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
     helper_type r_x = (2 * dot_emae + dot_em) / dot_ae;
 
-    helper_type tay_res = tay(r_x, 4);
+    helper_type tay_res = tay(r_x, 8);
 
     // В строчках ниже rae_x - должно быть большое число, в то время как rem_x малое
     // Но мы от малого rem_x отнимаем rae_x * tay_res, где tay_res малое
