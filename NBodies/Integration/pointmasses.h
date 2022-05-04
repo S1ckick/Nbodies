@@ -60,14 +60,16 @@ struct ContextData
   std::ofstream fi;
 };
 
-helper_type tay_arr[] = {-3.0 / 2.0, 3.0 / 8.0, 1. / 16., 3. / 128., 3. / 256., 7. / 1024., 9. / 2048., 99. / 32768.};
+helper_type tay_arr[] = {-3.0 / 2.0, 3.0 / 8.0, 1. / 16., 3. / 128., 3. / 256., 7. / 1024., 9. / 2048., 99. / 32768., 143./65536., 429./262144.};
 
 helper_type tay(helper_type x, int n)
 {
   helper_type res = 0;
+  helper_type temp_x = x;
   for (int i = 0; i < n; i++)
   {
-    res += tay_arr[i] * std::pow(x, i + 1);
+    res += tay_arr[i] * x;
+    x *= temp_x;
   }
   return res;
 }
@@ -204,7 +206,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     for (j = barrier; j < userdata->n_objects; j++)
     {
       // Five individual asteroids must not perturb the discrete asteroid ring
-      if (/*(j >= self->ab_start) && (j < self->ab_end) &&*/ (i > moonNum))
+      if ((j >= 390) && (j < 570) && (i > moonNum))
         continue;
 
       helper_type k_dx, k_dy, k_dz;
@@ -286,9 +288,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     helper_type dot_em = vecLen2(rem_x, rem_y, rem_z);
     helper_type dot_ae = vecLen2(rae_x, rae_y, rae_z);
 
-    helper_type r_x = (2 * dot_emae + dot_em) / dot_ae;
+    helper_type r_x = (2 * dot_emae - dot_em) / dot_ae;
 
-    helper_type tay_res = tay(r_x, 8);
+    helper_type tay_res = tay(r_x, 6);
 
     // В строчках ниже rae_x - должно быть большое число, в то время как rem_x малое
     // Но мы от малого rem_x отнимаем rae_x * tay_res, где tay_res малое
@@ -301,12 +303,21 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     helper_type _dist = sqrt(_dist2);
     helper_type _dist3 = _dist * _dist2;
 
-    f[moonNum] += userdata->masses[j] * _dx * _dist3;
-    f[moonNum] += userdata->masses[j] * _dy * _dist3;
-    f[moonNum] += userdata->masses[j] * _dz * _dist3;
-    f[j] -= userdata->masses[moonNum] * ram_x * _dist3;
-    f[j] -= userdata->masses[moonNum] * ram_y * _dist3;
-    f[j] -= userdata->masses[moonNum] * ram_z * _dist3;
+    helper_type dist_ae2 = 1.0 / vecLen2(rae_x, rae_y, rae_z);
+    helper_type dist_ae = sqrt(dist_ae2);
+    helper_type dist_ae3 = dist_ae * dist_ae2;
+
+    helper_type to_moon_x = userdata->masses[j] * _dx * _dist3;
+    helper_type to_moon_y = userdata->masses[j] * _dy * _dist3;
+    helper_type to_moon_z = userdata->masses[j] * _dz * _dist3;
+
+    f[moonNum * 6 + 3] += to_moon_x;
+    f[moonNum * 6 + 4] += to_moon_y;
+    f[moonNum * 6 + 5] += to_moon_z;
+    f[j * 6 + 3] -= userdata->masses[moonNum] * ram_x * _dist3;
+    f[j * 6 + 4] -= userdata->masses[moonNum] * ram_y * _dist3;
+    f[j * 6 + 5] -= userdata->masses[moonNum] * ram_z * _dist3;
+
   }
 #endif
 

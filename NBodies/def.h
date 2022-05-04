@@ -6,7 +6,7 @@
 
 //#define SAVE_INV 1
 
-#define TAYLOR
+//#define TAYLOR
 
 
 const int YEARS = 40;
