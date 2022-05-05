@@ -589,7 +589,6 @@ template <typename ABMD_DOUBLE>
 int callback_there(double *t, ABMD_DOUBLE *state, void *context)
 {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
-
 #ifdef SAVE_STEPS
     abm_test->f << std::setprecision(20) 
                  << state[6 * DIFF_PLANET] << " "
@@ -609,7 +608,7 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context)
 #endif
 
   abm_test->i++;
-  t[0] += 1/32.0;
+  t[0] += 1;
 
   return 1;
 }
@@ -631,7 +630,7 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context)
 #endif
 
   abm_test->i++;
-  t[0] -= 1/32.0;
+  t[0] -= 1;
 
   return 1;
 }

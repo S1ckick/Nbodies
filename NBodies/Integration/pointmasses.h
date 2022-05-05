@@ -42,7 +42,7 @@ public:
   int n_objects;
   std::vector<helper_type> dx, dy, dz;
   std::vector<helper_type> dist, dist2, dist3;
-  std::vector<Type> temp_acc;
+  std::vector<helper_type> temp_acc;
   std::vector<helper_type> fx, fy, fz;
 };
 #define NO_RELATIVITY
@@ -247,32 +247,14 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
   for (int i = 0; i < userdata->n_objects; i++)
   {
-#ifdef TAYLOR
-    if(i == moonNum)
-      continue;
-#endif
     f[6 * i + 3] = userdata->fx[i];
     f[6 * i + 4] = userdata->fy[i];
     f[6 * i + 5] = userdata->fz[i];
   }
 
-      // Переводим Луну в геоцентр
-  // !!!Теперь ее координаты малы
-  x[6 * moonNum] = gcmoon_x;
-  x[6 * moonNum + 1] = gcmoon_y;
-  x[6 * moonNum + 2] = gcmoon_z;
-  x[6 * moonNum + 3] = gcmoon_vx;
-  x[6 * moonNum + 4] = gcmoon_vy;
-  x[6 * moonNum + 5] = gcmoon_vz;
-
-  // Ускорение Луны теперь в геоцентре
-  f[6 * moonNum + 3] -= f[6 * earthNum + 3];
-  f[6 * moonNum + 4] -= f[6 * earthNum + 4];
-  f[6 * moonNum + 5] -= f[6 * earthNum + 5];
-
 #ifdef TAYLOR
   // i == moonNum
-  for (j = 0; j < userdata->n_objects; j++)
+  for (j = userdata->n_objects - 1; j >= 0; j--)
   {
     if(j == moonNum || j == earthNum)
       continue;
@@ -304,7 +286,8 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
     helper_type r_x = (2 * dot_emae - dot_em) / dot_ae;
 
-    helper_type tay_res = tay(r_x, 6);
+    helper_type tay_res = tay(r_x, 4);
+    
 
     // В строчках ниже rae_x - должно быть большое число, в то время как rem_x малое
     // Но мы от малого rem_x отнимаем rae_x * tay_res, где tay_res малое
@@ -379,13 +362,17 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     }
   }
 
+  helper_type acc_e_x = 0.0;
+  helper_type acc_e_y = 0.0;
+  helper_type acc_e_z = 0.0;
+
   for (i = 0; i < barrier; ++i)
   {
-    double vi_sqr = to_double(x[6 * i + 3]) * to_double(x[6 * i + 3]) +
+    helper_type vi_sqr = to_double(x[6 * i + 3]) * to_double(x[6 * i + 3]) +
                     to_double(x[6 * i + 4]) * to_double(x[6 * i + 4]) +
                     to_double(x[6 * i + 5]) * to_double(x[6 * i + 5]);
 
-    double sum_i = 0.0;
+    helper_type sum_i = 0.0;
     for (k = 0; k < barrier; ++k)
     {
       if (i == k)
@@ -400,15 +387,15 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
       int ij = barrier * i + j;
 
-      double vj_sqr = to_double(x[6 * j + 3]) * to_double(x[6 * j + 3]) +
+      helper_type vj_sqr = to_double(x[6 * j + 3]) * to_double(x[6 * j + 3]) +
                       to_double(x[6 * j + 4]) * to_double(x[6 * j + 4]) +
                       to_double(x[6 * j + 5]) * to_double(x[6 * j + 5]);
 
-      double vi_dot_vj = to_double(x[6 * i + 3]) * to_double(x[6 * j + 3]) +
+      helper_type vi_dot_vj = to_double(x[6 * i + 3]) * to_double(x[6 * j + 3]) +
                          to_double(x[6 * i + 4]) * to_double(x[6 * j + 4]) +
                          to_double(x[6 * i + 5]) * to_double(x[6 * j + 5]);
 
-      double sum_j = 0.0;
+      helper_type sum_j = 0.0;
       for (k = 0; k < barrier; ++k)
       {
         if (j == k)
@@ -416,37 +403,61 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         sum_j += userdata->masses[k] * userdata->dist[barrier * j + k];
       }
 
-      double t1 = -4.0 * sum_i - sum_j + vi_sqr + 2.0 * vj_sqr - 4.0 * vi_dot_vj;
-      double t2 = userdata->dist[ij] * (-userdata->dx[ij] * to_double(x[6 * j + 3]) +
+      helper_type t1 = -4.0 * sum_i - sum_j + vi_sqr + 2.0 * vj_sqr - 4.0 * vi_dot_vj;
+      helper_type t2 = userdata->dist[ij] * (-userdata->dx[ij] * to_double(x[6 * j + 3]) +
                                         -userdata->dy[ij] * to_double(x[6 * j + 4]) +
                                         -userdata->dz[ij] * to_double(x[6 * j + 5]));
       t2 = -1.5 * t2 * t2;
-      double t3 = 0.5 * to_double(userdata->dx[ij] * userdata->temp_acc[3 * j] +
+      helper_type t3 = 0.5 * to_double(userdata->dx[ij] * userdata->temp_acc[3 * j] +
                                   userdata->dy[ij] * userdata->temp_acc[3 * j + 1] +
                                   userdata->dz[ij] * userdata->temp_acc[3 * j + 2]);
 
-      double c1 = revLS2 * userdata->masses[j] * userdata->dist3[ij] * (t1 + t2 + t3);
+      helper_type c1 = revLS2 * userdata->masses[j] * userdata->dist3[ij] * (t1 + t2 + t3);
       f[6 * i + 3] += userdata->dx[ij] * c1;
       f[6 * i + 4] += userdata->dy[ij] * c1;
       f[6 * i + 5] += userdata->dz[ij] * c1;
 
-      double p1 = userdata->dist[ij] * (-userdata->dx[ij] * (4 * to_double(x[6 * i + 3] - 3 * x[6 * j + 3])) +
+      helper_type p1 = userdata->dist[ij] * (-userdata->dx[ij] * (4 * to_double(x[6 * i + 3] - 3 * x[6 * j + 3])) +
                                         -userdata->dy[ij] * (4 * to_double(x[6 * i + 4] - 3 * x[6 * j + 4])) +
                                         -userdata->dz[ij] * (4 * to_double(x[6 * i + 5] - 3 * x[6 * j + 5])));
 
-      double c2 = revLS2 * userdata->masses[j] * userdata->dist2[ij] * p1;
+      helper_type c2 = revLS2 * userdata->masses[j] * userdata->dist2[ij] * p1;
 
-      double dv_x = to_double(x[6 * i + 3]) - to_double(x[6 * j + 3]);
-      double dv_y = to_double(x[6 * i + 4]) - to_double(x[6 * j + 4]);
-      double dv_z = to_double(x[6 * i + 5]) - to_double(x[6 * j + 5]);
+      helper_type dv_x = to_double(x[6 * i + 3]) - to_double(x[6 * j + 3]);
+      helper_type dv_y = to_double(x[6 * i + 4]) - to_double(x[6 * j + 4]);
+      helper_type dv_z = to_double(x[6 * i + 5]) - to_double(x[6 * j + 5]);
       f[6 * i + 3] += dv_x * c2;
       f[6 * i + 4] += dv_y * c2;
       f[6 * i + 5] += dv_z * c2;
 
-      double c3 = 3.5 * revLS2 * userdata->masses[j] * userdata->dist[ij];
+      helper_type c3 = 3.5 * revLS2 * userdata->masses[j] * userdata->dist[ij];
       f[6 * i + 3] += userdata->temp_acc[3 * j] * c3;
       f[6 * i + 4] += userdata->temp_acc[3 * j + 1] * c3;
       f[6 * i + 5] += userdata->temp_acc[3 * j + 2] * c3;
+
+      if(i == earthNum){
+        acc_e_x += userdata->dx[ij] * c1 + dv_x * c2 + userdata->temp_acc[3 * j] * c3;
+        acc_e_y += userdata->dy[ij] * c1 + dv_y * c2 + userdata->temp_acc[3 * j + 1] * c3;
+        acc_e_z += userdata->dz[ij] * c1 + dv_z * c2 + userdata->temp_acc[3 * j + 2] * c3;
+      }
     }
   }
+
+  f[6 * moonNum + 3] -= acc_e_x;
+  f[6 * moonNum + 4] -= acc_e_y;
+  f[6 * moonNum + 5] -= acc_e_z;
+
+        // Переводим Луну в геоцентр
+  // !!!Теперь ее координаты малы
+  x[6 * moonNum] = gcmoon_x;
+  x[6 * moonNum + 1] = gcmoon_y;
+  x[6 * moonNum + 2] = gcmoon_z;
+  x[6 * moonNum + 3] = gcmoon_vx;
+  x[6 * moonNum + 4] = gcmoon_vy;
+  x[6 * moonNum + 5] = gcmoon_vz;
+
+  // f[6 * moonNum + 3] -= f[6 * earthNum + 3];
+  // f[6 * moonNum + 4] -= f[6 * earthNum + 4];
+  // f[6 * moonNum + 5] -= f[6 * earthNum + 5];
+
 }
