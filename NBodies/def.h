@@ -1,5 +1,5 @@
-#define NUMBER_DOUBLE_DOUBLE 1
-//#define NUMBER_DOUBLE 1
+//#define NUMBER_DOUBLE_DOUBLE 1
+#define NUMBER_DOUBLE 2
 
 #define SAVE_STEPS 1
 #define SAVE_DIFF 1
@@ -26,11 +26,14 @@ const int DIFF_PLANET = int(Planets::MOON);
 
   using main_type = dd_real;
   using helper_type = double;
+#endif
+#if NUMBER_DOUBLE == 2
+  using main_type = double;
+  using helper_type = double;
 #else
   using main_type = long double;
   using helper_type = long double;
 #endif
-
 const int moonNum = int(Planets::MOON);
 const int earthNum = int(Planets::EARTH);
 const int barrier = int(Planets::BAMBERGA_324) + 1;

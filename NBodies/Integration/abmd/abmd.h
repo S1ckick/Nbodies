@@ -54,7 +54,7 @@ dd_real coefss<dd_real>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
     dd_real(8.092989203533249e15) / dd_real(3.201186852864e16),
     dd_real(8.5455477715379e13) / dd_real(3.4237292544e14),
     dd_real(1.2600467236042756559e19) / dd_real(5.109094217170944e19)};
-#else
+#elif NUMBER_DOUBLE == 1
 template <>
 long double coefss<long double>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
     (long double)(1.0),
@@ -76,6 +76,28 @@ long double coefss<long double>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
     (long double)(8.092989203533249e15) / (long double)(3.201186852864e16),
     (long double)(8.5455477715379e13) / (long double)(3.4237292544e14),
     (long double)(1.2600467236042756559e19) / (long double)(5.109094217170944e19)};
+#else
+template <>
+double coefss<double>::PREDICTOR_COEFFS[ABMD_MAX_ORDER] = {
+    (double)(1.0),
+    (double)(1.0) / (double)(2.0),
+    (double)(5.0) / (double)(12.0),
+    (double)(3.0) / (double)(8.0),
+    (double)(251.0) / (double)(720.0),
+    (double)(95.0) / (double)(288.0),
+    (double)(19087.0) / (double)(60480.0),
+    (double)(5257.0) / (double)(17280.0),
+    (double)(1070017.0) / (double)(3628800.0),
+    (double)(25713.0) / (double)(89600.0),
+    (double)(26842253.0) / (double)(95800320.0),
+    (double)(4777223.0) / (double)(17418240.0),
+    (double)(703604254357.0) / (double)(2615348736000.0),
+    (double)(106364763817.0) / (double)(402361344000.0),
+    (double)(1166309819657.0) / (double)(4483454976000.0),
+    (double)(2.5221445e7) / (double)(9.8402304e7),
+    (double)(8.092989203533249e15) / (double)(3.201186852864e16),
+    (double)(8.5455477715379e13) / (double)(3.4237292544e14),
+    (double)(1.2600467236042756559e19) / (double)(5.109094217170944e19)};
 #endif
 /********** ABMD method **********/
 template <typename ABMD_DOUBLE>
