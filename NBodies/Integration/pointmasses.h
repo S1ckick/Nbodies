@@ -176,8 +176,16 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   // Go backwards so that the acceleration from the Sun is added last
   for (i = barrier - 1; i >= 0; i--)
   {
+#ifdef TAYLOR
+    if(i == moonNum)
+      continue;
+#endif
     for (j = i + 1; j < barrier; j++)
     {
+#ifdef TAYLOR
+      if(j == moonNum)
+        continue;
+#endif
       // Если не пара Луна-Земля
       if (i != earthNum || j != moonNum)
       {
@@ -197,13 +205,6 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         userdata->fy[j] -= userdata->masses[i] * k_dy;
         userdata->fz[j] -= userdata->masses[i] * k_dz;
       }
-
-#ifdef TAYLOR
-      if(i == moonNum || j == moonNum){
-        
-      }
-#endif
-
     }
 
     // На этом этапе к Луне и к Земле взаимодействие Луна-Земля еще не добавлены
@@ -251,23 +252,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     f[6 * i + 5] = userdata->fz[i];
   }
 
-  // Переводим Луну в геоцентр
-  // !!!Теперь ее координаты малы
-  x[6 * moonNum] = gcmoon_x;
-  x[6 * moonNum + 1] = gcmoon_y;
-  x[6 * moonNum + 2] = gcmoon_z;
-  x[6 * moonNum + 3] = gcmoon_vx;
-  x[6 * moonNum + 4] = gcmoon_vy;
-  x[6 * moonNum + 5] = gcmoon_vz;
-
-  // Ускорение Луны теперь в геоцентре
-  f[6 * moonNum + 3] -= f[6 * earthNum + 3];
-  f[6 * moonNum + 4] -= f[6 * earthNum + 4];
-  f[6 * moonNum + 5] -= f[6 * earthNum + 5];
-
 #ifdef TAYLOR
   // i == moonNum
-  for (j = barrier; j < userdata->n_objects; j++)
+  for (j = 0; j < userdata->n_objects; j++)
   {
     // _dx, _dy, _dz -- r_am
     // _dist3 -- ||r_am||^3
@@ -329,6 +316,20 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 #endif
 
   // Добавили взаимодействие Луна-Астероиды
+
+    // Переводим Луну в геоцентр
+  // !!!Теперь ее координаты малы
+  x[6 * moonNum] = gcmoon_x;
+  x[6 * moonNum + 1] = gcmoon_y;
+  x[6 * moonNum + 2] = gcmoon_z;
+  x[6 * moonNum + 3] = gcmoon_vx;
+  x[6 * moonNum + 4] = gcmoon_vy;
+  x[6 * moonNum + 5] = gcmoon_vz;
+
+  // Ускорение Луны теперь в геоцентре
+  f[6 * moonNum + 3] -= f[6 * earthNum + 3];
+  f[6 * moonNum + 4] -= f[6 * earthNum + 4];
+  f[6 * moonNum + 5] -= f[6 * earthNum + 5];
 
   // В самом конце добавляем взаимодействие Луна-Земля
   ABMD_DOUBLE k_dx = _dx_me * _dist3_me;
