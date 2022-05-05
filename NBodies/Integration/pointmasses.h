@@ -247,15 +247,35 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
   for (int i = 0; i < userdata->n_objects; i++)
   {
+#ifdef TAYLOR
+    if(i == moonNum)
+      continue;
+#endif
     f[6 * i + 3] = userdata->fx[i];
     f[6 * i + 4] = userdata->fy[i];
     f[6 * i + 5] = userdata->fz[i];
   }
 
+      // Переводим Луну в геоцентр
+  // !!!Теперь ее координаты малы
+  x[6 * moonNum] = gcmoon_x;
+  x[6 * moonNum + 1] = gcmoon_y;
+  x[6 * moonNum + 2] = gcmoon_z;
+  x[6 * moonNum + 3] = gcmoon_vx;
+  x[6 * moonNum + 4] = gcmoon_vy;
+  x[6 * moonNum + 5] = gcmoon_vz;
+
+  // Ускорение Луны теперь в геоцентре
+  f[6 * moonNum + 3] -= f[6 * earthNum + 3];
+  f[6 * moonNum + 4] -= f[6 * earthNum + 4];
+  f[6 * moonNum + 5] -= f[6 * earthNum + 5];
+
 #ifdef TAYLOR
   // i == moonNum
   for (j = 0; j < userdata->n_objects; j++)
   {
+    if(j == moonNum || j == earthNum)
+      continue;
     // _dx, _dy, _dz -- r_am
     // _dist3 -- ||r_am||^3
 
@@ -316,20 +336,6 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 #endif
 
   // Добавили взаимодействие Луна-Астероиды
-
-    // Переводим Луну в геоцентр
-  // !!!Теперь ее координаты малы
-  x[6 * moonNum] = gcmoon_x;
-  x[6 * moonNum + 1] = gcmoon_y;
-  x[6 * moonNum + 2] = gcmoon_z;
-  x[6 * moonNum + 3] = gcmoon_vx;
-  x[6 * moonNum + 4] = gcmoon_vy;
-  x[6 * moonNum + 5] = gcmoon_vz;
-
-  // Ускорение Луны теперь в геоцентре
-  f[6 * moonNum + 3] -= f[6 * earthNum + 3];
-  f[6 * moonNum + 4] -= f[6 * earthNum + 4];
-  f[6 * moonNum + 5] -= f[6 * earthNum + 5];
 
   // В самом конце добавляем взаимодействие Луна-Земля
   ABMD_DOUBLE k_dx = _dx_me * _dist3_me;
