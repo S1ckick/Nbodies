@@ -47,10 +47,10 @@ void moonToBarycenter(std::vector<main_type> &rr, main_type *res)
 using namespace std;
 
 int main() {
-  std::ifstream infile("points.txt");
+  std::ifstream infile("pointmasses.txt");
   long double x, y, z, vx, vy, vz, m;
   std::vector<main_type> rr;
-  int objects_counter = 150;
+  int objects_counter = 660;
   rr.resize(6 * objects_counter);
   std::vector<double> masses;
   masses.resize(objects_counter);

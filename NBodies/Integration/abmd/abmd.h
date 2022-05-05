@@ -609,7 +609,7 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context)
 #endif
 
   abm_test->i++;
-  t[0] += 1;
+  t[0] += 1/32.0;
 
   return 1;
 }
@@ -631,7 +631,7 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context)
 #endif
 
   abm_test->i++;
-  t[0] -= 1;
+  t[0] -= 1/32.0;
 
   return 1;
 }

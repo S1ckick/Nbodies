@@ -197,6 +197,13 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         userdata->fy[j] -= userdata->masses[i] * k_dy;
         userdata->fz[j] -= userdata->masses[i] * k_dz;
       }
+
+#ifdef TAYLOR
+      if(i == moonNum || j == moonNum){
+        
+      }
+#endif
+
     }
 
     // На этом этапе к Луне и к Земле взаимодействие Луна-Земля еще не добавлены
