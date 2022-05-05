@@ -325,6 +325,12 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   ABMD_DOUBLE k_dy = _dy_me * _dist3_me;
   ABMD_DOUBLE k_dz = _dz_me * _dist3_me;
 
+  #ifndef TAYLOR
+  f[6 * moonNum + 3] -= f[6 * earthNum + 3];
+  f[6 * moonNum + 4] -= f[6 * earthNum + 4];
+  f[6 * moonNum + 5] -= f[6 * earthNum + 5];
+#endif
+
   f[6 * earthNum + 3] += to_double(userdata->masses[moonNum] * k_dx);
   f[6 * earthNum + 4] += to_double(userdata->masses[moonNum] * k_dy);
   f[6 * earthNum + 5] += to_double(userdata->masses[moonNum] * k_dz);
@@ -456,8 +462,5 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   x[6 * moonNum + 4] = gcmoon_vy;
   x[6 * moonNum + 5] = gcmoon_vz;
 
-  // f[6 * moonNum + 3] -= f[6 * earthNum + 3];
-  // f[6 * moonNum + 4] -= f[6 * earthNum + 4];
-  // f[6 * moonNum + 5] -= f[6 * earthNum + 5];
 
 }

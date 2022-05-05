@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <chrono>
 
 std::vector<std::string> split(std::string s, std::string delimiter)
 {
@@ -671,8 +672,13 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x,
   ABMD_DOUBLE *prev_final_state =
       (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * dim);
 
+  auto start = std::chrono::high_resolution_clock::now();
   ABMD_run(abm);
 
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration =
+      std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "time: " << duration.count() << " microseconds \n";
   for (int i = 0; i < dim; i++)
   {
     prev_final_state[i] = abm->final_state[i];
