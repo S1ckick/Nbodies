@@ -142,6 +142,14 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         userdata->dx[j * barrier + i] = -to_double(_dx_me);
         userdata->dy[j * barrier + i] = -to_double(_dy_me);
         userdata->dz[j * barrier + i] = -to_double(_dz_me);
+
+        userdata->dist[i * barrier + j] = to_double(_dist_me);
+        userdata->dist2[i * barrier + j] = to_double(_dist2_me);
+        userdata->dist3[i * barrier + j] = to_double(_dist3_me);
+
+        userdata->dist[j * barrier + i] = to_double(_dist_me);
+        userdata->dist2[j * barrier + i] = to_double(_dist2_me);
+        userdata->dist3[j * barrier + i] = to_double(_dist3_me);
       }
       else
       {
@@ -325,7 +333,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   ABMD_DOUBLE k_dy = _dy_me * _dist3_me;
   ABMD_DOUBLE k_dz = _dz_me * _dist3_me;
 
-  #ifndef TAYLOR
+#ifndef TAYLOR
   f[6 * moonNum + 3] -= f[6 * earthNum + 3];
   f[6 * moonNum + 4] -= f[6 * earthNum + 4];
   f[6 * moonNum + 5] -= f[6 * earthNum + 5];
@@ -350,8 +358,8 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     f[6 * i + 5] = to_double(f[6 * i + 5]);
   }
 
-  double revLS2 = 3.335661199676477670e-5;
-  // RELATIVISTIC
+  double revLS2 = 3.335661199676477670e-005;
+  // ------------------------------------RELATIVISTIC------------------------------------
   for (i = 0; i < barrier; ++i)
   {
     
@@ -423,9 +431,9 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
       f[6 * i + 4] += userdata->dy[ij] * c1;
       f[6 * i + 5] += userdata->dz[ij] * c1;
 
-      helper_type p1 = userdata->dist[ij] * (-userdata->dx[ij] * (4 * to_double(x[6 * i + 3] - 3 * x[6 * j + 3])) +
-                                        -userdata->dy[ij] * (4 * to_double(x[6 * i + 4] - 3 * x[6 * j + 4])) +
-                                        -userdata->dz[ij] * (4 * to_double(x[6 * i + 5] - 3 * x[6 * j + 5])));
+      helper_type p1 = userdata->dist[ij] * (-userdata->dx[ij] * (4. * to_double(x[6 * i + 3]) - 3. * to_double(x[6 * j + 3])) +
+                                        -userdata->dy[ij] * (4. * to_double(x[6 * i + 4]) - 3. * to_double(x[6 * j + 4])) +
+                                        -userdata->dz[ij] * (4. * to_double(x[6 * i + 5]) - 3. * to_double(x[6 * j + 5])));
 
       helper_type c2 = revLS2 * userdata->masses[j] * userdata->dist2[ij] * p1;
 
