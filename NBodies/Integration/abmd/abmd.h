@@ -560,7 +560,7 @@ void moonToBarycenter(ABMD_DOUBLE *rr, ABMD_DOUBLE *res)
 #define vecLen2(x, y, z) (x * x + y * y + z * z)
 
 template <typename ABMD_DOUBLE>
-void calc_invariants(ABMD_DOUBLE *rr, double *masses, int num, double *new_center)
+void calc_invariants(ABMD_DOUBLE *rr, double *masses, int num, ABMD_DOUBLE *new_center)
 {
   /// for energy fix need change moon center
   ABMD_DOUBLE *gcmoon = (ABMD_DOUBLE *)malloc(6 * sizeof(ABMD_DOUBLE));
@@ -568,26 +568,26 @@ void calc_invariants(ABMD_DOUBLE *rr, double *masses, int num, double *new_cente
 
   //------------relativistic barycentre-------------
 
-  std::vector<double> b(3, 0);
-  double sum_mu_star = 0;
+  std::vector<ABMD_DOUBLE> b(3, 0);
+  ABMD_DOUBLE sum_mu_star = 0;
   for (int i = 0; i < num; i++)
   {
-    double mu_star = 0;
-    double sum = 0;
+    ABMD_DOUBLE mu_star = 0;
+    ABMD_DOUBLE sum = 0;
     for (int j = 0; j < num; j++)
     {
       if (j != i)
       {
-        double dist = dist(to_double(rr[i * 6]), to_double(rr[i * 6 + 1]), to_double(rr[i * 6 + 2]),
-                           to_double(rr[j * 6]), to_double(rr[j * 6 + 1]), to_double(rr[j * 6 + 2]));
+        ABMD_DOUBLE dist = dist(rr[i * 6], rr[i * 6 + 1], rr[i * 6 + 2],
+                           rr[j * 6], rr[j * 6 + 1], rr[j * 6 + 2]);
         sum += masses[j] / dist;
       }
     }
-    mu_star = masses[i] * (1 + 1 / (2 * 299792.458 * 299792.458) * (vecLen2(to_double(rr[i * 6 + 3]), to_double(rr[i * 6 + 4]), to_double(rr[i * 6 + 5])) - sum));
+    mu_star = masses[i] * (1.0 + 1.0 / (2.0 * 299792.458 * 299792.458) * (vecLen2(rr[i * 6 + 3], rr[i * 6 + 4], rr[i * 6 + 5]) - sum));
     sum_mu_star += mu_star;
-    b[0] += mu_star * to_double(rr[i * 6]);
-    b[1] += mu_star * to_double(rr[i * 6 + 1]);
-    b[2] += mu_star * to_double(rr[i * 6 + 2]);
+    b[0] += mu_star * rr[i * 6];
+    b[1] += mu_star * rr[i * 6 + 1];
+    b[2] += mu_star * rr[i * 6 + 2];
   }
 
   b[0] /= sum_mu_star;
@@ -623,7 +623,7 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context)
 #endif
 
 #ifdef SAVE_INV
-  double inv_barycentre = 0;
+  ABMD_DOUBLE inv_barycentre = 0;
   calc_invariants(
       state, abm_test->objects->masses.data(), abm_test->objects->n_objects,
       &inv_barycentre);
