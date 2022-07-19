@@ -1,10 +1,12 @@
+#include <vector>
 #define NUMBER_DOUBLE_DOUBLE 1
 //#define NUMBER_DOUBLE 2
 
-//#define SAVE_STEPS 1
-//#define SAVE_DIFF 1
-
+#define SAVE_STEPS 1
+#define SAVE_DIFF 1
 #define SAVE_INV 1
+
+#define RELATIVISTIC 1
 
 #define TAYLOR
 
@@ -29,7 +31,7 @@ enum class Planets {
   BAMBERGA_324
 };
 
-const int DIFF_PLANET = int(Planets::MOON);
+std::vector<int> DIFF_PLANETS = {int(Planets::MOON), int(Planets::MARS), int(Planets::MERCURY)};
 
 #ifdef NUMBER_DOUBLE_DOUBLE
 #include <qd/dd_real.h>
