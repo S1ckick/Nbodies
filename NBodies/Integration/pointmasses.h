@@ -5,13 +5,14 @@
 
 #include "../def.h"
 
-#define dotProduct(x1, y1, z1, x2, y2, z2) (x1 * x2 + y1 * y2 + z1 * z2)
-#define vecLen2(x, y, z) (x * x + y * y + z * z)
+#define dotProduct(x1, y1, z1, x2, y2, z2) ((x1) * (x2) + (y1) * (y2) + (z1) * (z2))
+#define vecLen2(x, y, z) ((x) * (x) + (y) * (y) + (z) * (z))
 
 long double to_double(const long double &x)
 {
   return x;
 }
+
 
 template <typename Type>
 class ObjectsData
@@ -58,6 +59,7 @@ struct ContextData
   std::ofstream f;
   std::ofstream fb;
   std::ofstream fi;
+  std::ofstream fen;
 };
 
 helper_type tay_arr[] = {-3.0 / 2.0, 3.0 / 8.0, 1. / 16., 3. / 128., 3. / 256., 7. / 1024., 9. / 2048., 99. / 32768., 143./65536., 429./262144.};
@@ -133,12 +135,12 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
         // сохраняется 1/||r_earth - r_moon||^3
         _dist3_me = _dist_me * _dist2_me;
 
-        // сохраняем (r_earth - r_moon)
+        // сохраняем (r_moon - r_earth)
         userdata->dx[i * barrier + j] = to_double(_dx_me);
         userdata->dy[i * barrier + j] = to_double(_dy_me);
         userdata->dz[i * barrier + j] = to_double(_dz_me);
 
-        // сохраняем (r_moon - r_earth) или наоборот...
+        // сохраняем (r_earth - r_moon)
         userdata->dx[j * barrier + i] = -to_double(_dx_me);
         userdata->dy[j * barrier + i] = -to_double(_dy_me);
         userdata->dz[j * barrier + i] = -to_double(_dz_me);
@@ -357,12 +359,11 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
     f[6 * i + 4] = to_double(f[6 * i + 4]);
     f[6 * i + 5] = to_double(f[6 * i + 5]);
   }
-
+#ifdef RELATIVISTIC
   double revLS2 = 3.335661199676477670e-005;
-  // ------------------------------------RELATIVISTIC------------------------------------
+  // // ------------------------------------RELATIVISTIC------------------------------------
   for (i = 0; i < barrier; ++i)
   {
-    
     userdata->temp_acc[3 * i] = to_double(f[6 * i + 3]);
     userdata->temp_acc[3 * i + 1] = to_double(f[6 * i + 4]);
     userdata->temp_acc[3 * i + 2] = to_double(f[6 * i + 5]);
@@ -382,10 +383,11 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
   for (i = 0; i < barrier; ++i)
   {
+    // (v_A)^2
     helper_type vi_sqr = to_double(x[6 * i + 3]) * to_double(x[6 * i + 3]) +
                     to_double(x[6 * i + 4]) * to_double(x[6 * i + 4]) +
                     to_double(x[6 * i + 5]) * to_double(x[6 * i + 5]);
-
+    // (sum_{C != A} Gm_C/r_AC)
     helper_type sum_i = 0.0;
     for (k = 0; k < barrier; ++k)
     {
@@ -401,14 +403,16 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
 
       int ij = barrier * i + j;
 
+      // (v_B)^2
       helper_type vj_sqr = to_double(x[6 * j + 3]) * to_double(x[6 * j + 3]) +
                       to_double(x[6 * j + 4]) * to_double(x[6 * j + 4]) +
                       to_double(x[6 * j + 5]) * to_double(x[6 * j + 5]);
-
+      // v_A dot v_B
       helper_type vi_dot_vj = to_double(x[6 * i + 3]) * to_double(x[6 * j + 3]) +
                          to_double(x[6 * i + 4]) * to_double(x[6 * j + 4]) +
                          to_double(x[6 * i + 5]) * to_double(x[6 * j + 5]);
 
+      // (sum_{C != B} Gm_C/r_BC)
       helper_type sum_j = 0.0;
       for (k = 0; k < barrier; ++k)
       {
@@ -427,6 +431,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
                                   userdata->dz[ij] * userdata->temp_acc[3 * j + 2]);
 
       helper_type c1 = revLS2 * userdata->masses[j] * userdata->dist3[ij] * (t1 + t2 + t3);
+      // ok
       f[6 * i + 3] += userdata->dx[ij] * c1;
       f[6 * i + 4] += userdata->dy[ij] * c1;
       f[6 * i + 5] += userdata->dz[ij] * c1;
@@ -440,11 +445,13 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
       helper_type dv_x = to_double(x[6 * i + 3]) - to_double(x[6 * j + 3]);
       helper_type dv_y = to_double(x[6 * i + 4]) - to_double(x[6 * j + 4]);
       helper_type dv_z = to_double(x[6 * i + 5]) - to_double(x[6 * j + 5]);
+      //ok
       f[6 * i + 3] += dv_x * c2;
       f[6 * i + 4] += dv_y * c2;
       f[6 * i + 5] += dv_z * c2;
 
       helper_type c3 = 3.5 * revLS2 * userdata->masses[j] * userdata->dist[ij];
+      //ok
       f[6 * i + 3] += userdata->temp_acc[3 * j] * c3;
       f[6 * i + 4] += userdata->temp_acc[3 * j + 1] * c3;
       f[6 * i + 5] += userdata->temp_acc[3 * j + 2] * c3;
@@ -460,6 +467,7 @@ void pointmassesCalculateXdot_tmp(ABMD_DOUBLE x[], double t, ABMD_DOUBLE *f, voi
   f[6 * moonNum + 3] -= acc_e_x;
   f[6 * moonNum + 4] -= acc_e_y;
   f[6 * moonNum + 5] -= acc_e_z;
+#endif
 
         // Переводим Луну в геоцентр
   // !!!Теперь ее координаты малы

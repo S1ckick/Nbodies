@@ -103,14 +103,14 @@ struct Queue {
   ABMD_DOUBLE *_array;
   ABMD_DOUBLE **xarray, **dxarray;
   ABMD_DOUBLE *x_backup;
-  double *diffs_r;
-  double *diffs_w;
+  helper_type *diffs_r;
+  helper_type *diffs_w;
   ABMD_DOUBLE *last_diff;
   int delays_poly_degree;
   int pointsave_poly_degree;
-  double *lgr_delay_ws;
-  double *lgr_delay_ws_nolast;
-  double *lgr_pointsave_ws;
+  helper_type *lgr_delay_ws;
+  helper_type *lgr_delay_ws_nolast;
+  helper_type *lgr_pointsave_ws;
   ABMD_DOUBLE *lgr_nom;
 
   Queue(int capacity, int dim) {
@@ -133,14 +133,14 @@ struct Queue {
       dxarray[i] = &this->_array[i * block_size + dim];
     }
 
-    diffs_r = (double *)malloc((capacity - 1) * dim * sizeof(double));
-    diffs_w = (double *)malloc((capacity - 1) * dim * sizeof(double));
+    diffs_r = (helper_type *)malloc((capacity - 1) * dim * sizeof(helper_type));
+    diffs_w = (helper_type *)malloc((capacity - 1) * dim * sizeof(helper_type));
     last_diff = (ABMD_DOUBLE *)malloc(dim * sizeof(ABMD_DOUBLE));
     delays_poly_degree = capacity - 1;
     pointsave_poly_degree = capacity - 1;
-    lgr_delay_ws = (double *)malloc(capacity * sizeof(double));
-    lgr_delay_ws_nolast = (double *)malloc((capacity - 1) * sizeof(double));
-    lgr_pointsave_ws = (double *)malloc(capacity * sizeof(double));
+    lgr_delay_ws = (helper_type *)malloc(capacity * sizeof(helper_type));
+    lgr_delay_ws_nolast = (helper_type *)malloc((capacity - 1) * sizeof(helper_type));
+    lgr_pointsave_ws = (helper_type *)malloc(capacity * sizeof(helper_type));
     lgr_nom = (ABMD_DOUBLE *)malloc(dim * sizeof(ABMD_DOUBLE));
   }
 
@@ -178,11 +178,11 @@ struct Queue {
   //   q->pointsave_poly_degree = deg;
   // }
 
-  double _compute_wj(int j, int len) {
+  helper_type _compute_wj(int j, int len) {
     /*
      * Computes j-th barycentric Lagrange weight (eq. 3.2)
      */
-    double w = 1;
+    helper_type w = 1;
     double h = this->h;
     for (int k = 0; k < len; k++) {
       if (k == j) continue;
@@ -246,7 +246,7 @@ struct Queue {
     xarray[tail] = &_array[i];
   }
 
-  void _evaluate(double t, int *idxs, int idxs_len, int n_points, double *ws,
+  void _evaluate(double t, int *idxs, int idxs_len, int n_points, helper_type *ws,
                  int last_known, ABMD_DOUBLE *(*get)(Queue<ABMD_DOUBLE> *, int),
                  ABMD_DOUBLE *out) {
     double t_idx = _get_t_index(t, last_known);
@@ -316,7 +316,7 @@ struct Queue {
   void evaluate_dx(double t, int *idxs, int idxs_len, int last_known,
                    ABMD_DOUBLE *out) {
     int deg = delays_poly_degree;
-    double *ws = lgr_delay_ws;
+    helper_type *ws = lgr_delay_ws;
     int n_points = deg + 1;
     if (!last_known && deg == capacity - 1) {
       ws = lgr_delay_ws_nolast;
@@ -356,14 +356,14 @@ struct Queue {
     return dxarray[tail];
   }
 
-  double *get_diffs_r() { return diffs_r; }
+  helper_type *get_diffs_r() { return diffs_r; }
 
-  double *get_diffs_w() { return diffs_w; }
+  helper_type *get_diffs_w() { return diffs_w; }
 
   ABMD_DOUBLE *get_last_diff() { return last_diff; }
 
   void swap_diffs() {
-    double *diffs_r = this->diffs_r;
+    helper_type *diffs_r = this->diffs_r;
     this->diffs_r = this->diffs_w;
     this->diffs_w = diffs_r;
   }
@@ -374,12 +374,12 @@ struct Queue {
     int dim = this->dim;
 
     ABMD_DOUBLE *right = peek_right_dx();
-    double *diffs_r = this->diffs_r;
-    double *diffs_w = this->diffs_w;
+    helper_type *diffs_r = this->diffs_r;
+    helper_type *diffs_w = this->diffs_w;
 
     if (!is_full()) {
       for (int i = 0; i < dim; i++) {
-        double new_d = to_double(right[i]);
+        helper_type new_d = to_double(right[i]);
         for (int j = 0; j < size - 1; j++) {
           *diffs_w++ = new_d;
           new_d -= *diffs_r++;
@@ -394,7 +394,7 @@ struct Queue {
     ABMD_DOUBLE *last_diff_1 = last_diff;
 
     for (int i = 0; i < dim; i++) {
-      double new_d = to_double(right[i]);
+      helper_type new_d = to_double(right[i]);
       for (int j = 0; j < size - 1; j++) {
         *diffs_w++ = new_d;
         new_d -= *diffs_r++;

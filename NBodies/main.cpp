@@ -30,10 +30,19 @@ void moonToBarycenter(std::vector<main_type> &rr, std::vector<main_type> &res) {
 
 void transform_x_to_center(std::vector<double> &masses,
                            std::vector<main_type> &rr, int n) {
+  std::vector<main_type> gcmoon(6, 0);
+  moonToBarycenter(rr, gcmoon);
+#ifdef RELATIVISTIC
+#ifdef NUMBER_DOUBLE_DOUBLE
+  main_type revLS2 = main_type("3.335661199676477669820576657401368279e-05");
+#else
+#if NUMBER_DOUBLE == 1
+  main_type revLS2 = 3.335661199676477669820577e-05L;
+#else
+  main_type revLS2 = 3.335661199676477670e-005;
+#endif
+#endif
   for (int ii = 0; ii < n; ii++) {
-    std::vector<main_type> gcmoon(6, 0);
-    moonToBarycenter(rr, gcmoon);
-
     std::vector<main_type> pos_adj(3, 0);
     std::vector<main_type> vel_adj(3, 0);
     main_type sum_mu_star = 0;
@@ -44,27 +53,28 @@ void transform_x_to_center(std::vector<double> &masses,
       main_type sum = 0;
       main_type sum_dot = 0;
 
-      for (int j = 0; j < masses.size(); j++) {
+      int jn = i < barrier ? masses.size() : barrier;
+      for (int j = 0; j < jn; j++) {
         if (j != i) {
-          main_type dist = dist(rr[i * 6], rr[i * 6 + 1], rr[i * 6 + 2],
-                                rr[j * 6], rr[j * 6 + 1], rr[j * 6 + 2]);
+          main_type dist = dist(rr[j * 6], rr[j * 6 + 1], rr[j * 6 + 2],
+                                rr[i * 6], rr[i * 6 + 1], rr[i * 6 + 2]);
           sum_dot +=
-              masses[j] *
-              dotProduct(rr[i * 6] - rr[j * 6], rr[i * 6 + 1] - rr[j * 6 + 1],
-                         rr[i * 6 + 2] - rr[j * 6 + 2],
-                         rr[i * 6 + 3] + rr[j * 6 + 3],
-                         rr[i * 6 + 4] + rr[j * 6 + 4],
-                         rr[i * 6 + 5] + rr[j * 6 + 5]) /
+              ((main_type)masses[j]) *
+              dotProduct(rr[j * 6] - rr[i * 6], rr[j * 6 + 1] - rr[i * 6 + 1],
+                         rr[j * 6 + 2] - rr[i * 6 + 2],
+                         rr[j * 6 + 3] + rr[i * 6 + 3],
+                         rr[j * 6 + 4] + rr[i * 6 + 4],
+                         rr[j * 6 + 5] + rr[i * 6 + 5]) /
               (dist * dist * dist);
-          sum += masses[j] / dist;
+          sum += ((main_type)masses[j]) / dist;
         }
       }
       mu_star =
-          masses[i] *
+          ((main_type)masses[i]) *
           (1. +
-           1. / (2. * 299792.458 * 299792.458) *
+           0.5 * revLS2 *
                (vecLen2(rr[i * 6 + 3], rr[i * 6 + 4], rr[i * 6 + 5]) - sum));
-      mu_dot = masses[i] * 1. / (2. * 299792.458 * 299792.458) * sum_dot;
+      mu_dot = ((main_type)masses[i]) * 0.5 * revLS2 * sum_dot;
 
       sum_mu_star += mu_star;
       pos_adj[0] += mu_star * rr[i * 6];
@@ -76,27 +86,59 @@ void transform_x_to_center(std::vector<double> &masses,
       vel_adj[2] += (mu_star * rr[i * 6 + 5] + mu_dot * rr[i * 6 + 2]);
     }
 
-    for (int i = 0; i < masses.size(); i++) {
-      rr[i * 6] -= pos_adj[0] / sum_mu_star;
-      rr[i * 6 + 1] -= pos_adj[1] / sum_mu_star;
-      rr[i * 6 + 2] -= pos_adj[2] / sum_mu_star;
+    // for (int i = 0; i < masses.size(); i++) {
+    //   rr[i * 6] -= pos_adj[0] / sum_mu_star;
+    //   rr[i * 6 + 1] -= pos_adj[1] / sum_mu_star;
+    //   rr[i * 6 + 2] -= pos_adj[2] / sum_mu_star;
 
-      rr[i * 6 + 3] -= vel_adj[0] / sum_mu_star;
-      rr[i * 6 + 4] -= vel_adj[1] / sum_mu_star;
-      rr[i * 6 + 5] -= vel_adj[2] / sum_mu_star;
-    }
-    std::cout << pos_adj[0] << " " << pos_adj[1] << " " << pos_adj[2]
-              << std::endl;
-    std::cout << vel_adj[0] << " " << vel_adj[1] << " " << vel_adj[2]
-              << std::endl;
-
-    rr[moonNum * 6] = gcmoon[0];
-    rr[moonNum * 6 + 1] = gcmoon[1];
-    rr[moonNum * 6 + 2] = gcmoon[2];
-    rr[moonNum * 6 + 3] = gcmoon[3];
-    rr[moonNum * 6 + 4] = gcmoon[4];
-    rr[moonNum * 6 + 5] = gcmoon[5];
+    //   rr[i * 6 + 3] -= vel_adj[0] / sum_mu_star;
+    //   rr[i * 6 + 4] -= vel_adj[1] / sum_mu_star;
+    //   rr[i * 6 + 5] -= vel_adj[2] / sum_mu_star;
+    // }
+    std::cout << "Barycentre pos: " << pos_adj[0] << " " << pos_adj[1] << " "
+              << pos_adj[2] << std::endl;
+    std::cout << "Barycentre vel" << vel_adj[0] << " " << vel_adj[1] << " "
+              << vel_adj[2] << std::endl;
   }
+#else
+  std::vector<main_type> pos_adj(3, 0);
+  std::vector<main_type> vel_adj(3, 0);
+  main_type total_mass = 0;
+  for (int i = 0; i < masses.size(); i++) {
+    total_mass += masses[i];
+    pos_adj[0] += rr[i * 6] * masses[i];
+    pos_adj[1] += rr[i * 6 + 1] * masses[i];
+    pos_adj[2] += rr[i * 6 + 2] * masses[i];
+
+    vel_adj[0] += rr[i * 6 + 3] * masses[i];
+    vel_adj[1] += rr[i * 6 + 4] * masses[i];
+    vel_adj[2] += rr[i * 6 + 5] * masses[i];
+  }
+
+  pos_adj[0] /= total_mass;
+  pos_adj[1] /= total_mass;
+  pos_adj[2] /= total_mass;
+  vel_adj[0] /= total_mass;
+  vel_adj[1] /= total_mass;
+  vel_adj[2] /= total_mass;
+
+  for (int i = 0; i < masses.size(); i++) {
+    rr[i * 6] -= pos_adj[0];
+    rr[i * 6 + 1] -= pos_adj[1];
+    rr[i * 6 + 2] -= pos_adj[2];
+
+    rr[i * 6 + 3] -= vel_adj[0];
+    rr[i * 6 + 4] -= vel_adj[1];
+    rr[i * 6 + 5] -= vel_adj[2];
+  }
+
+#endif
+  rr[moonNum * 6] = gcmoon[0];
+  rr[moonNum * 6 + 1] = gcmoon[1];
+  rr[moonNum * 6 + 2] = gcmoon[2];
+  rr[moonNum * 6 + 3] = gcmoon[3];
+  rr[moonNum * 6 + 4] = gcmoon[4];
+  rr[moonNum * 6 + 5] = gcmoon[5];
 }
 
 using namespace std;
