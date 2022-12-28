@@ -5,8 +5,9 @@
 #define SAVE_STEPS 1
 #define SAVE_DIFF 1
 #define SAVE_INV 1
-
 #define RELATIVISTIC 1
+
+//#define ALL_STEPS 1
 
 #define TAYLOR
 

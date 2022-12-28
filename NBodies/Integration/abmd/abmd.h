@@ -429,7 +429,13 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
       (ABMD_DOUBLE *)malloc(sizeof(ABMD_DOUBLE) * dim);
   double *callback_t = abm->callback_t;
 
-  while (run_callback && *callback_t * hsgn <= rk4_t1 * hsgn) {
+  double write_step = 1;
+#ifdef ALL_STEPS
+  write_step = h * hsgn;
+#else
+  while (run_callback && *callback_t * hsgn <= rk4_t1 * hsgn) 
+#endif
+  {
     queue->evaluate_x_all(*callback_t, callback_state_l);
     // for (int i = 0; i < dim; i++) {
     //   #ifdef NUMBER_DOUBLE_DOUBLE
@@ -438,7 +444,7 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
     //   callback_state[i] = callback_state_l[i];
     //   #endif
     // }
-    run_callback = abm->callback(callback_t, callback_state_l, abm->context);
+    run_callback = abm->callback(callback_t, callback_state_l, abm->context, write_step);
   }
 
   free(rk4_sol);
@@ -446,7 +452,16 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
 
   // Main ABM loop
   int start_index = rk4_i1 + 1;
+  double step = (n - start_index) / 100.0;
+  double last_step = 0;
+  int steps = 1;
   for (int i = start_index; i < n; i++) {
+    int cur_step = i - start_index;
+    if (last_step <= cur_step) {
+      last_step += step;
+      std::cout << "Progress: " << steps << "/100\n";
+      steps++;
+    }
     double t = t0 + i * h;
 
     abm_data.predict();
@@ -466,19 +481,27 @@ void ABMD_run(ABMD<ABMD_DOUBLE> *abm) {
     queue->restore_last_x();
     abm_data.correct(nullptr);
     queue->swap_diffs();
-
+#ifndef ALL_STEPS
     while (run_callback && (t - h) * hsgn <= *callback_t * hsgn &&
-           *callback_t * hsgn <= t * hsgn) {
+           *callback_t * hsgn <= t * hsgn) 
+#endif
+    {
       queue->evaluate_x_all(*callback_t, callback_state_l);
       // for (int j = 0; j < dim; j++) {
       //   callback_state[j] = (ABMD_DOUBLE)callback_state_l[j];
       // }
-      run_callback = abm->callback(callback_t, callback_state_l, abm->context);
+      run_callback = abm->callback(callback_t, callback_state_l, abm->context, write_step);
     }
   }
 
+  #ifndef ALL_STEPS
+  ABMD_DOUBLE *final_arr = queue->peek_right_x();
+  #else
+  ABMD_DOUBLE *final_arr = callback_state_l;
+  #endif
+
   for (int i = 0; i < dim; i++) {
-    abm->final_state[i] = (ABMD_DOUBLE)queue->peek_right_x()[i];
+    abm->final_state[i] = (ABMD_DOUBLE)final_arr[i];
   }
 
   // destroy_abm_data(abm_data);
@@ -631,7 +654,7 @@ void calc_invariants(ABMD_DOUBLE *rr, double *masses, int num,
 }
 
 template <typename ABMD_DOUBLE>
-int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
+int callback_there(double *t, ABMD_DOUBLE *state, void *context, double h) {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
 #ifdef SAVE_STEPS
   for (int planet : DIFF_PLANETS) {
@@ -657,13 +680,13 @@ int callback_there(double *t, ABMD_DOUBLE *state, void *context) {
 #endif
 
   abm_test->i++;
-  t[0] += 1;
+  t[0] += h;
 
   return 1;
 }
 
 template <typename ABMD_DOUBLE>
-int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
+int callback_back(double *t, ABMD_DOUBLE *state, void *context, double h) {
   ContextData<ABMD_DOUBLE> *abm_test = (ContextData<ABMD_DOUBLE> *)context;
   int dim = abm_test->dim;
 
@@ -678,7 +701,7 @@ int callback_back(double *t, ABMD_DOUBLE *state, void *context) {
 #endif
 
   abm_test->i++;
-  t[0] -= 1;
+  t[0] -= h;
 
   return 1;
 }
@@ -695,13 +718,11 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x, std::vector<double> masses,
   std::cout << "sol_size : " << sol_size << std::endl;
   double callback_t = 0;
 
-  double *data_center = (double *)malloc(sizeof(double) * sol_size);
-
   ObjectsData<ABMD_DOUBLE> *objects = new ObjectsData<ABMD_DOUBLE>(masses);
   ContextData<ABMD_DOUBLE> abm_test{
       .objects = objects,
       .callback_t = &callback_t,
-      .center = data_center,
+      .center = nullptr,
       .i = 0,
       .dim = dim,
       .f = std::ofstream("res_out.txt"),     // fopen("res_out.txt", "wt"),
@@ -778,7 +799,6 @@ void ABMD_calc_diff(std::vector<ABMD_DOUBLE> &x, std::vector<double> masses,
       j--;
     }
   }
-  free(data_center);
 #endif
 }
 

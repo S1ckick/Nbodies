@@ -20,7 +20,7 @@ using ABMD_RHSD = void (*)(ABMD_DOUBLE x[], ABMD_DOUBLE xs_delayed[],
                            ABMD_DOUBLE *out, void *context);
 
 template <typename ABMD_DOUBLE>
-using CALLBACK_FNC = int (*)(double *t, ABMD_DOUBLE *state, void *context);
+using CALLBACK_FNC = int (*)(double *t, ABMD_DOUBLE *state, void *context, double h);
 
 template <typename ABMD_DOUBLE>
 struct ABMD {
